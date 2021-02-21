@@ -5,15 +5,25 @@ let rows, cols;
 let newMaze = true;
 
 //true == wall;
-function Node(state){
-    this.left = state;
-    this.top = state;
-    this.right = state;
-    this.bottom = state;
-    this.startNode = false;
-    this.endNode = false;
-    this.next = [null,null];
-    this.backgroundColor = white;
+let Node = class{
+    constructor(state){
+        //walls
+        this.left = state;
+        this.top = state;
+        this.right = state;
+        this.bottom = state;
+
+        //start end
+        this.startNode = false;
+        this.endNode = false;
+
+        //pathfinding
+        this.next = [null,null];
+        this.dist = 0;
+
+        //misc
+        this.backgroundColor = "white";
+    }
 }
 
 let startFieldPicked = false;
@@ -142,12 +152,7 @@ function repaint(){
                 button.setAttribute("onclick", "setField('end',"+i+", "+j+")");
                 td.appendChild(button);
             }
-            if(maze[i][j].startNode){
-                style += "background-color: rgb(60, 255, 0);";
-            }
-            if(maze[i][j].endNode){
-                style += "background-color: rgb(247, 70, 70);";
-            }
+
             if(maze[i][j].left){
                 style += "border-left: 4px solid black; ";
             }
@@ -186,6 +191,7 @@ function repaint(){
             }
             style += "width: " + 100 / maze[i].length + "%;";
             style += "height: " + 100 / maze.length + "%;";
+            style += "background-color: " + maze[i][j].backgroundColor + ";";
             td.setAttribute("style", style + "position: relative;");
             row.appendChild(td);
         }
@@ -213,9 +219,11 @@ function setField(type, row, col){
             startNode = [row, col];
         } else {
             maze[startNode[0]][startNode[1]].startNode = false;
+            maze[startNode[0]][startNode[1]].backgroundColor = "white";
             startNode = [row, col];
         }
         maze[row][col].startNode = true;
+        maze[row][col].backgroundColor = "rgb(60, 255, 0)";
         startFieldPicked = true;
         createCheckList(1);
     } else if(type == "end") {
@@ -223,9 +231,11 @@ function setField(type, row, col){
             endField = [row, col];
         } else {
             maze[endField[0]][endField[1]].endNode = false;
+            maze[endField[0]][endField[1]].backgroundColor = "white";
             endField = [row, col];
         }
         maze[row][col].endNode = true;
+        maze[row][col].backgroundColor = "rgb(247, 70, 70)";
         endfieldPicked = true;
         createCheckList(3);
     } else {
@@ -280,14 +290,53 @@ function djikstraPath(){
     !maze[row][col].right ? [row, col+1] : 
     !maze[row][col].bottom ? [row+1, col] : 
     "error";
-
-    if(starteSide == "error"){
-        error("Start is blocked");
-    } else {
-
+    
+    let unexplored = [];
+    for(let i = 0; i < maze.length; i++){
+        for(let j = 0; j < maze[i].length; j++){
+            if(!maze[i][j].startNode){
+                maze[i][j].dist = Infinity;
+                unexplored.push([[i],[j]]);
+            }
+        }
     }
+
+    let running = window.setInterval(function(){
+        let lowestDist = Infinity;
+        let lowestDistNode = undefined;
+        let lowestDistIndex = undefined;
+        for(let i = 0; i < unexplored.length; i++){
+            //calculating the manhatten distance = the nondiagonal steps to the square
+            let dist = Math.abs((startNode[1] - unexplored[i][1])) + Math.abs((startNode[0]-unexplored[i][0]));
+            if(dist < lowestDist){
+                lowestDist = dist;
+                lowestDistNode = unexplored[i];
+                lowestDistIndex = i;
+                if(dist == 1){
+                    break;
+                }
+            }
+        }
+        maze[lowestDistNode[0]][lowestDistNode[1]].backgroundColor = "green";
+        maze[lowestDistNode[0]][lowestDistNode[1]].dist = lowestDist;
+        unexplored.splice(lowestDistIndex, 1);
+        if(unexplored.length == 0){
+            clearInterval(running);
+        } else if(maze[lowestDistNode[0]][lowestDistNode[1]].endNode){
+            clearInterval(running);
+            found(lowestDistNode);
+        }
+        repaint();
+    },250)
+
     
 }
+
+function found(node){
+    maze[node[0]][node[1]].backgroundColor = "red";
+    repaint();
+}
+
 
 function error(e){
     console.log("Error: " + e);
