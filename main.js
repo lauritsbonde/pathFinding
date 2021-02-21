@@ -5,24 +5,15 @@ let rows, cols;
 let newMaze = true;
 
 //true == wall;
-function closedNode(){
-    this.left = true;
-    this.top = true;
-    this.right = true;
-    this.bottom = true;
+function Node(state){
+    this.left = state;
+    this.top = state;
+    this.right = state;
+    this.bottom = state;
     this.startNode = false;
     this.endNode = false;
     this.next = [null,null];
-}
-
-function openNode(){
-    this.left = false;
-    this.top = false;
-    this.right = false;
-    this.bottom = false;
-    this.startNode = false;
-    this.endNode = false;
-    this.next = [null,null];
+    this.backgroundColor = white;
 }
 
 let startFieldPicked = false;
@@ -50,9 +41,9 @@ function makeMaze(how){
             let mazeRow = [];
             for(let j = 0; j < cols; j++){
                 if(how == "open"){
-                    mazeRow.push(new openNode);
+                    mazeRow.push(new Node(false));
                 } else {
-                    mazeRow.push(new closedNode);
+                    mazeRow.push(new Node(true));
                 }
             }
             maze.push(mazeRow);
@@ -96,9 +87,11 @@ function createCheckList(current){
         startFieldPicked = false;
         startNode = null;
         wallEdit = false;
+        pickEndfield = false;
         repaint();
     } else if(current == 1 && startNode != null){
         wallEdit = true;
+        pickEndfield = false;
         repaint();
     } else if(current == 2 && startNode != null){
         wallEdit = false;
@@ -191,7 +184,8 @@ function repaint(){
                     td.appendChild(button);
                 }
             }
-
+            style += "width: " + 100 / maze[i].length + "%;";
+            style += "height: " + 100 / maze.length + "%;";
             td.setAttribute("style", style + "position: relative;");
             row.appendChild(td);
         }
@@ -240,8 +234,59 @@ function setField(type, row, col){
     repaint();
 }
 
+let pathFindings = ["Dijkstra", "A*", "sample"];
 function finishMap(){
+    let pathCon = document.createElement("div");
+    for(let i = 0; i < pathFindings.length; i++){
+        let input = document.createElement("input");
+        input.setAttribute("type", "checkbox");
+        input.setAttribute("name", pathFindings[i]);
+        input.setAttribute("id", pathFindings[i]);
+        
+        let label = document.createElement("label");
+        let labelTxt = document.createTextNode(pathFindings[i]);
+        label.appendChild(labelTxt);
+        label.setAttribute("for", pathFindings[i]);
 
+        pathCon.append(input, label);
+    }
+    
+    let runbut = document.createElement("button");
+    let runTxt = document.createTextNode("Run!");
+    runbut.appendChild(runTxt);
+    runbut.setAttribute("onclick", "runPath()");
+    pathCon.appendChild(runbut);
+
+    document.getElementById("checklistCon").appendChild(pathCon);
+}
+
+function runPath(){
+    let runDjikstra = document.getElementById("Dijkstra").checked;
+    let runAstart = document.getElementById("A*").checked;
+    let runSample = document.getElementById("sample").checked;
+
+    if(runDjikstra){
+        djikstraPath();
+    }
+
+}
+
+function djikstraPath(){
+    let row = startNode[0];
+    let col = startNode[1];
+    let startSide = 
+    !maze[row][col].left ? [row, col-1] : 
+    !maze[row][col].top ? [row-1, col] :  
+    !maze[row][col].right ? [row, col+1] : 
+    !maze[row][col].bottom ? [row+1, col] : 
+    "error";
+
+    if(starteSide == "error"){
+        error("Start is blocked");
+    } else {
+
+    }
+    
 }
 
 function error(e){
