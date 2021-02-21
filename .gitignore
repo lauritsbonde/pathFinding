@@ -45,15 +45,5 @@ Temporary Items
 !.vscode/extensions.json
 *.code-workspace
 
-### Web ###
-*.asp
-*.cer
-*.csr
-*.jsp
-*.php
-*.rss
-*.wasm
-*.wat
-*.xhtml
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,vscode,web
