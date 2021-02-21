@@ -1,0 +1,40 @@
+.removeWall:hover {
+    cursor: pointer;
+    background-color: rgb(247, 70, 70);
+}
+
+.removeWall {
+    opacity: 2%;
+}
+
+.addWall:hover {
+    cursor: pointer;
+    background-color: rgb(60, 255, 0);
+}
+
+.addWall {
+    opacity: 60%;
+}
+
+.fieldButtons:hover {
+    cursor: pointer;
+    color: rgb(60, 255, 0);
+}
+
+.activeStage {
+    color: black;
+}
+
+.otherStage {
+    color: rgba(73, 73, 73, 0.562);
+    transition: all .4s;
+}
+
+.otherStage:hover {
+    cursor: pointer;
+    color: rgb(60, 255, 0);
+}
+
+.startfield {
+    background-color: rgb(60, 255, 0);
+}
