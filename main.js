@@ -5,11 +5,21 @@ let rows, cols;
 let newMaze = true;
 
 //true == wall;
-function node(){
+function closedNode(){
     this.left = true;
     this.top = true;
     this.right = true;
     this.bottom = true;
+    this.startNode = false;
+    this.endNode = false;
+    this.next = [null,null];
+}
+
+function openNode(){
+    this.left = false;
+    this.top = false;
+    this.right = false;
+    this.bottom = false;
     this.startNode = false;
     this.endNode = false;
     this.next = [null,null];
@@ -20,7 +30,7 @@ let startNode = null;
 
 let pickEndfield = false;
 let endfieldPicked = false;
-let endNode = null;
+let endField = null;
 
 //how is either manual or automatic for generating maze
 function makeMaze(how){
@@ -39,13 +49,17 @@ function makeMaze(how){
         for(let i = 0; i < rows; i++){
             let mazeRow = [];
             for(let j = 0; j < cols; j++){
-                mazeRow.push(new node);
+                if(how == "open"){
+                    mazeRow.push(new openNode);
+                } else {
+                    mazeRow.push(new closedNode);
+                }
             }
             maze.push(mazeRow);
         }
         newMaze = false;
     }
-    if(how == "manual"){
+    if(how == "closed" || how == "open"){
         createCheckList(0);
         repaint();  
     }
@@ -58,25 +72,6 @@ function automatic(){
 let wallEdit = false;
 
 function createCheckList(current){
-    console.log(current, startNode);
-    if(current == 0 && startNode != null){
-        maze[startNode[0]][startNode[1]].startNode = false;
-        startFieldPicked = false;
-        startNode = null;
-        wallEdit = false;
-        repaint();
-    } else if(current == 1 && startNode != null){
-        wallEdit = true;
-        repaint();
-    } else if(current == 2 && startNode != null){
-        wallEdit = false;
-        pickEndfield = true;
-        repaint();
-    } else if(current == 3 && startNode != null && endNode != null){
-        wallEdit = false;
-        pickEndfield = false;
-        repaint();
-    }
     document.getElementById("checklistCon").innerHTML = "";
     let ul = document.createElement("ul");
     ul.setAttribute("id", "checklist");
@@ -96,13 +91,44 @@ function createCheckList(current){
         ul.appendChild(li);
     }
     document.getElementById("checklistCon").appendChild(ul);
+    if(current == 0 && startNode != null){
+        maze[startNode[0]][startNode[1]].startNode = false;
+        startFieldPicked = false;
+        startNode = null;
+        wallEdit = false;
+        repaint();
+    } else if(current == 1 && startNode != null){
+        wallEdit = true;
+        repaint();
+    } else if(current == 2 && startNode != null){
+        wallEdit = false;
+        pickEndfield = true;
+        repaint();
+    } else if(current == 3 && startNode != null && endField != null){
+        wallEdit = false;
+        pickEndfield = false;
+        let buttons = ["Finish", "Edit"];
+        for(let i = 0; i < buttons.length; i++){
+            let but = document.createElement("button");
+            if(buttons[i] == "Finish"){
+                but.setAttribute("onclick", "finishMap()");
+            } else {
+                but.setAttribute("onclick", "createCheckList(1)");
+            }
+            let butTxt = document.createTextNode(buttons[i]);
+            but.appendChild(butTxt);
+            but.setAttribute("style", "display: inline-block;");
+            document.getElementById("checklistCon").appendChild(but);
+        }
+        repaint();
+    }
 }
 
 
 function repaint(){
     document.getElementById("maze").innerHTML = "";
     let table = document.createElement("table");
-    table.setAttribute("style", "height: 100%; width: 100%; padding:0px; border-collapse: collapse;");
+    table.setAttribute("style", "height: 100%; width: 100%; padding:0px; border-collapse: collapse; border: 2px solid black;");
     for(let i = 0; i < maze.length; i++){
         let row = document.createElement("tr");
         row.setAttribute("style", "width:100vw; heigth: "+100/cols+" vh");
@@ -187,7 +213,6 @@ function toggleWall(wall, row, col){
     repaint();
 }
 
-//TODO: use this as start and endfield
 function setField(type, row, col){
     if(type == "start"){
         if(startNode == null){
@@ -200,10 +225,11 @@ function setField(type, row, col){
         startFieldPicked = true;
         createCheckList(1);
     } else if(type == "end") {
-        if(endNode == null){
-            endNode = [row, col];
+        if(endField == null){
+            endField = [row, col];
         } else {
-            maze[endNode[0]][endNode[1]].endNode = false;
+            maze[endField[0]][endField[1]].endNode = false;
+            endField = [row, col];
         }
         maze[row][col].endNode = true;
         endfieldPicked = true;
@@ -212,6 +238,10 @@ function setField(type, row, col){
         error("Wrong type of field");
     }
     repaint();
+}
+
+function finishMap(){
+
 }
 
 function error(e){
