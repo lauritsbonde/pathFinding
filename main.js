@@ -311,21 +311,18 @@ function djikstraPath(){
     }
     let connected = [];
     let visited = [];
-    connected = neighbours(visited, connected, row, col);
+    connected = neighbours(0, connected, row, col);
     let running = window.setInterval(function(){
         let lowestDist = Infinity;
         let lowestDistNode = undefined;
         let lowestDistIndex = undefined;
         for(let i = 0; i < connected.length; i++){
             //calculating the manhatten distance = the nondiagonal steps to the square
-            let dist = Math.abs((startNode[1] - connected[i][1])) + Math.abs((startNode[0]-connected[i][0]));
-            if(dist < lowestDist){
-                lowestDist = dist;
+            if(maze[connected[i][0]][connected[i][1]].dist < lowestDist){
+                lowestDist = maze[connected[i][0]][connected[i][1]].dist;
                 lowestDistNode = connected[i];
                 lowestDistIndex = i;
-                if(dist == 1){
-                    break;
-                }
+                console.log(connected[i] + " . " + lowestDistNode);
             }
         }
 
@@ -334,8 +331,7 @@ function djikstraPath(){
         maze[lowestDistNode[0]][lowestDistNode[1]].visited = true;
         visited.push([lowestDistNode[0], lowestDistNode[1]]);
         connected.splice(lowestDistIndex, 1);
-        connected = neighbours(visited, connected, lowestDistNode[0], lowestDistNode[1]);
-        console.log(connected);
+        connected = neighbours(maze[lowestDistNode[0]][lowestDistNode[1]].dist, connected, lowestDistNode[0], lowestDistNode[1]);
         unexplored.splice(unexplored.indexOf(lowestDistNode), 1);
         if(connected.length == 0){
             clearInterval(running);
@@ -347,29 +343,33 @@ function djikstraPath(){
     },secsBetweenTicks)
 }
 
-function neighbours(visited, connected, row, col){
+function neighbours(distance, connected, row, col){
     if(col > 0){
         if(!maze[row][col-1].blocked && !maze[row][col-1].startNode && !maze[row][col-1].visited && !maze[row][col-1].connected){
             connected.push([row, col-1]);
             maze[row][col-1].connected = true;
+            maze[row][col-1].dist = distance+1;
         }
     }
     if(row > 0){
         if(!maze[row-1][col].blocked && !maze[row-1][col].startNode && !maze[row-1][col].visited && !maze[row-1][col].connected){
             connected.push([row-1, col]);
             maze[row-1][col].connected = true;
+            maze[row-1][col].dist = distance+1;
         }
     }
-    if(col < maze[0].length){
+    if(col < maze[0].length-1){
         if(!maze[row][col+1].blocked && !maze[row][col+1].startNode && !maze[row][col+1].visited && !maze[row][col+1].connected){
             connected.push([row, col+1]);
             maze[row][col+1].connected = true;
+            maze[row][col+1].dist = distance+1;
         }
     }
-    if(row < maze.length){
+    if(row < maze.length-1){
         if(!maze[row+1][col].blocked && !maze[row+1][col].startNode && !maze[row+1][col].visited && !maze[row+1][col].connected){
             connected.push([row+1, col]);
             maze[row+1][col].connected = true;
+            maze[row+1][col].dist = distance+1;
         }
     }
     return connected;
