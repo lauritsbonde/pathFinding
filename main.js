@@ -20,7 +20,7 @@ let Node = class{
         this.endNode = false;
 
         //pathfinding
-        this.next = [null,null];
+        this.prev = [null,null];
         this.dist = 0;
         this.visited = false;
         this.connected = false;
@@ -170,10 +170,19 @@ function repaint(){
                     td.appendChild(button);
                 }
             }
+            if(maze[i][j].dist != 0 && maze[i][j].dist != Infinity){
+                let distHeader = document.createElement("h3");
+                let distTxt = document.createTextNode(maze[i][j].dist);
+                distHeader.appendChild(distTxt);
+                distHeader.setAttribute("style", "color: black;");
+                td.appendChild(distHeader);
+            }
+
             style += "border: 2px solid rgba(29, 140, 204, 0.829);";
             style += "width: " + 100 / maze[i].length + "%;";
             style += "height: " + 100 / maze.length + "%;";
             style += "background-color: " + maze[i][j].backgroundColor + ";";
+            style += "text-align: center;";
             td.setAttribute("style", style + "position: relative;");
             row.appendChild(td);
         }
@@ -322,7 +331,6 @@ function djikstraPath(){
                 lowestDist = maze[connected[i][0]][connected[i][1]].dist;
                 lowestDistNode = connected[i];
                 lowestDistIndex = i;
-                console.log(connected[i] + " . " + lowestDistNode);
             }
         }
 
@@ -349,6 +357,7 @@ function neighbours(distance, connected, row, col){
             connected.push([row, col-1]);
             maze[row][col-1].connected = true;
             maze[row][col-1].dist = distance+1;
+            maze[row][col-1].prev = [row, col];
         }
     }
     if(row > 0){
@@ -356,6 +365,7 @@ function neighbours(distance, connected, row, col){
             connected.push([row-1, col]);
             maze[row-1][col].connected = true;
             maze[row-1][col].dist = distance+1;
+            maze[row-1][col].prev = [row, col];
         }
     }
     if(col < maze[0].length-1){
@@ -363,6 +373,7 @@ function neighbours(distance, connected, row, col){
             connected.push([row, col+1]);
             maze[row][col+1].connected = true;
             maze[row][col+1].dist = distance+1;
+            maze[row][col+1].prev = [row, col];
         }
     }
     if(row < maze.length-1){
@@ -370,6 +381,7 @@ function neighbours(distance, connected, row, col){
             connected.push([row+1, col]);
             maze[row+1][col].connected = true;
             maze[row+1][col].dist = distance+1;
+            maze[row+1][col].prev = [row, col];
         }
     }
     return connected;
@@ -377,6 +389,15 @@ function neighbours(distance, connected, row, col){
 
 function found(node){
     maze[node[0]][node[1]].backgroundColor = "red";
+
+    let ints = 0;
+    let prev = maze[node[0]][node[1]].prev;
+    while(prev[0] != null || prev[1] != null){
+        if(!maze[prev[0]][prev[1]].startNode){
+            maze[prev[0]][prev[1]].backgroundColor = "yellow";
+        }
+        prev = maze[prev[0]][prev[1]].prev;
+    }
     repaint();
 }
 
