@@ -13,6 +13,8 @@ let Node = class{
         this.right = state;
         this.bottom = state;
 
+        this.blocked = state;
+        
         //start end
         this.startNode = false;
         this.endNode = false;
@@ -20,6 +22,8 @@ let Node = class{
         //pathfinding
         this.next = [null,null];
         this.dist = 0;
+        this.visited = false;
+        this.connected = false;
 
         //misc
         this.backgroundColor = "white";
@@ -70,14 +74,14 @@ function automatic(){
 
 }
 
-let wallEdit = false;
+let blockEdit = false;
 
 function createCheckList(current){
     document.getElementById("checklistCon").innerHTML = "";
     let ul = document.createElement("ul");
     ul.setAttribute("id", "checklist");
     ul.setAttribute("style", "list-style-type: none;");
-    let items = ["Choose startfield", "Edit walls", "Choose endfield", "Finish"];
+    let items = ["Choose startfield", "Edit blocks", "Choose endfield", "Finish"];
     for(let i = 0; i < items.length; i++){
         let li = document.createElement("li");
         let liTxt = document.createTextNode(items[i]);
@@ -96,19 +100,19 @@ function createCheckList(current){
         maze[startNode[0]][startNode[1]].startNode = false;
         startFieldPicked = false;
         startNode = null;
-        wallEdit = false;
+        blockEdit = false;
         pickEndfield = false;
         repaint();
     } else if(current == 1 && startNode != null){
-        wallEdit = true;
+        blockEdit = true;
         pickEndfield = false;
         repaint();
     } else if(current == 2 && startNode != null){
-        wallEdit = false;
+        blockEdit = false;
         pickEndfield = true;
         repaint();
     } else if(current == 3 && startNode != null && endField != null){
-        wallEdit = false;
+        blockEdit = false;
         pickEndfield = false;
         let buttons = ["Finish", "Edit"];
         for(let i = 0; i < buttons.length; i++){
@@ -153,42 +157,20 @@ function repaint(){
                 td.appendChild(button);
             }
 
-            if(maze[i][j].left){
-                style += "border-left: 4px solid black; ";
-            }
-            if(maze[i][j].top){
-                style += "border-top: 4px solid black; ";
-            }
-            if(maze[i][j].right){
-                style += "border-right: 4px solid black; ";
-            }
-            if(maze[i][j].bottom){
-                style += "border-bottom: 4px solid black; ";
-            }
-            if(wallEdit){
+            if(blockEdit){
                 if(startFieldPicked && j < maze[i].length-1){
                     let button = document.createElement("button");
-                    button.setAttribute("style", "position: absolute; right: -11%; width: 20%; height: 90%; top: 5%; z-index: 3;");
-                    if(maze[i][j].right){
-                        button.setAttribute("class", "removeWall");
+                    button.setAttribute("style", "position: absolute; left: 0.5%; width: 99%; height: 99%; top: .5%; z-index: 3;");
+                    if(!maze[i][j].blocked){
+                        button.setAttribute("class", "block");
                     } else {
-                        button.setAttribute("class", "addWall");
+                        button.setAttribute("class", "unblock");
                     }
-                    button.setAttribute("onclick", "toggleWall('right', "+i+", "+j+")");
-                    td.appendChild(button);
-                }
-                if(startFieldPicked && i < maze.length-1){
-                    let button = document.createElement("button");
-                    button.setAttribute("style", "position: absolute; bottom: -10%; width: 90%; height: 20%; left: 5%; z-index: 3;");
-                    if(maze[i][j].bottom){
-                        button.setAttribute("class", "removeWall");
-                    } else {
-                        button.setAttribute("class", "addWall");
-                    }
-                    button.setAttribute("onclick", "toggleWall('bottom', "+i+", "+j+")");
+                    button.setAttribute("onclick", "blockToggle("+i+", "+j+")");
                     td.appendChild(button);
                 }
             }
+            style += "border: 2px solid rgba(29, 140, 204, 0.829);";
             style += "width: " + 100 / maze[i].length + "%;";
             style += "height: " + 100 / maze.length + "%;";
             style += "background-color: " + maze[i][j].backgroundColor + ";";
@@ -200,15 +182,12 @@ function repaint(){
     document.getElementById("maze").appendChild(table);
 }
 
-function toggleWall(wall, row, col){
-    if(wall == "right"){
-        maze[row][col].right = !maze[row][col].right;
-        maze[row][col+1].left = !maze[row][col+1].left;
-    } else if(wall = "bottom"){
-        maze[row][col].bottom = !maze[row][col].bottom;
-        maze[row+1][col].top = !maze[row+1][col].top;
+function blockToggle(row, col){
+    maze[row][col].blocked = !maze[row][col].blocked;
+    if(maze[row][col].blocked){
+        maze[row][col].backgroundColor = "black";
     } else {
-        error("not valid side");
+        maze[row][col].backgroundColor = "white";
     }
     repaint();
 }
@@ -245,6 +224,7 @@ function setField(type, row, col){
 }
 
 let pathFindings = ["Dijkstra", "A*", "sample"];
+let secsBetweenTicks = 250;
 function finishMap(){
     let pathCon = document.createElement("div");
     for(let i = 0; i < pathFindings.length; i++){
@@ -260,6 +240,29 @@ function finishMap(){
 
         pathCon.append(input, label);
     }
+
+    let range = document.createElement("input");
+    range.setAttribute("type", "range");
+    range.setAttribute("id", "speedRange");
+    range.setAttribute("name", "speedRange");
+    range.setAttribute("min", "50");
+    range.setAttribute("max", "1000");
+    range.setAttribute("onchange", "newSpeed()");
+    range.setAttribute("value", secsBetweenTicks);
+    range.setAttribute("style", "display: block;");
+    let rangelbl = document.createElement("label");
+    rangelbl.setAttribute("style", "display: block;");
+    let rangeTxt = document.createTextNode("Milliseconds between ticks: ");
+    let span = document.createElement("span");
+    span.setAttribute("id", "secsBetween");
+    let spanTxt = document.createTextNode(secsBetweenTicks)
+    span.appendChild(spanTxt);
+    rangelbl.appendChild(rangeTxt);
+    rangelbl.appendChild(span);
+    rangelbl.setAttribute("for", "speedRange");
+
+    pathCon.append(rangelbl, range);
+
     
     let runbut = document.createElement("button");
     let runTxt = document.createTextNode("Run!");
@@ -268,6 +271,12 @@ function finishMap(){
     pathCon.appendChild(runbut);
 
     document.getElementById("checklistCon").appendChild(pathCon);
+}
+
+function newSpeed(){
+    let speed = document.getElementById("speedRange").value;
+    document.getElementById("secsBetween").innerHTML = speed;
+    secsBetweenTicks = speed;
 }
 
 function runPath(){
@@ -294,42 +303,76 @@ function djikstraPath(){
     let unexplored = [];
     for(let i = 0; i < maze.length; i++){
         for(let j = 0; j < maze[i].length; j++){
-            if(!maze[i][j].startNode){
+            if(!maze[i][j].startNode && !maze[i][j].blocked){
                 maze[i][j].dist = Infinity;
                 unexplored.push([[i],[j]]);
             }
         }
     }
-
+    let connected = [];
+    let visited = [];
+    connected = neighbours(visited, connected, row, col);
     let running = window.setInterval(function(){
         let lowestDist = Infinity;
         let lowestDistNode = undefined;
         let lowestDistIndex = undefined;
-        for(let i = 0; i < unexplored.length; i++){
+        for(let i = 0; i < connected.length; i++){
             //calculating the manhatten distance = the nondiagonal steps to the square
-            let dist = Math.abs((startNode[1] - unexplored[i][1])) + Math.abs((startNode[0]-unexplored[i][0]));
+            let dist = Math.abs((startNode[1] - connected[i][1])) + Math.abs((startNode[0]-connected[i][0]));
             if(dist < lowestDist){
                 lowestDist = dist;
-                lowestDistNode = unexplored[i];
+                lowestDistNode = connected[i];
                 lowestDistIndex = i;
                 if(dist == 1){
                     break;
                 }
             }
         }
+
         maze[lowestDistNode[0]][lowestDistNode[1]].backgroundColor = "green";
         maze[lowestDistNode[0]][lowestDistNode[1]].dist = lowestDist;
-        unexplored.splice(lowestDistIndex, 1);
-        if(unexplored.length == 0){
+        maze[lowestDistNode[0]][lowestDistNode[1]].visited = true;
+        visited.push([lowestDistNode[0], lowestDistNode[1]]);
+        connected.splice(lowestDistIndex, 1);
+        connected = neighbours(visited, connected, lowestDistNode[0], lowestDistNode[1]);
+        console.log(connected);
+        unexplored.splice(unexplored.indexOf(lowestDistNode), 1);
+        if(connected.length == 0){
             clearInterval(running);
         } else if(maze[lowestDistNode[0]][lowestDistNode[1]].endNode){
             clearInterval(running);
             found(lowestDistNode);
         }
         repaint();
-    },250)
+    },secsBetweenTicks)
+}
 
-    
+function neighbours(visited, connected, row, col){
+    if(col > 0){
+        if(!maze[row][col-1].blocked && !maze[row][col-1].startNode && !maze[row][col-1].visited && !maze[row][col-1].connected){
+            connected.push([row, col-1]);
+            maze[row][col-1].connected = true;
+        }
+    }
+    if(row > 0){
+        if(!maze[row-1][col].blocked && !maze[row-1][col].startNode && !maze[row-1][col].visited && !maze[row-1][col].connected){
+            connected.push([row-1, col]);
+            maze[row-1][col].connected = true;
+        }
+    }
+    if(col < maze[0].length){
+        if(!maze[row][col+1].blocked && !maze[row][col+1].startNode && !maze[row][col+1].visited && !maze[row][col+1].connected){
+            connected.push([row, col+1]);
+            maze[row][col+1].connected = true;
+        }
+    }
+    if(row < maze.length){
+        if(!maze[row+1][col].blocked && !maze[row+1][col].startNode && !maze[row+1][col].visited && !maze[row+1][col].connected){
+            connected.push([row+1, col]);
+            maze[row+1][col].connected = true;
+        }
+    }
+    return connected;
 }
 
 function found(node){

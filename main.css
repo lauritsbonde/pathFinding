@@ -1,19 +1,19 @@
-.removeWall:hover {
+.block:hover {
     cursor: pointer;
     background-color: rgb(247, 70, 70);
 }
 
-.removeWall {
+.block {
     opacity: 2%;
 }
 
-.addWall:hover {
+.unblock:hover {
     cursor: pointer;
     background-color: rgb(60, 255, 0);
 }
 
-.addWall {
-    opacity: 60%;
+.unblock {
+    opacity: 10%;
 }
 
 .fieldButtons:hover {
