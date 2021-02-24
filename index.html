@@ -9,7 +9,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="main.css">
     </head>
-    <body>
+    <body onload="makeMaze('open')">
         <div id="setup" style="display: block;">
             <p>Rows: <input type="number" id="rows" placeholder="10" value="10"></p>
             <p>Cols: <input type="number" id="cols" placeholder="10" value="10"></p>
@@ -19,7 +19,7 @@
 
         </div>
         <div id="maze" style="width: 80vw; height:80vh; display: inline-block; vertical-align: top;"></div>
-        <div id="checklistCon" style="display: inline-block; vertical-align: top; width: 15vw;"></div>
+        <div id="checklistCon" style="display: inline-block; vertical-align: top; width: 15vw; z-index: 8;"></div>
         
         <script src="main.js"></script>
     </body>

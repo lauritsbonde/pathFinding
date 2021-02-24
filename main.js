@@ -141,6 +141,7 @@ function repaint(){
         row.setAttribute("style", "width:100vw; heigth: "+100/cols+" vh");
         for(let j = 0; j < maze[i].length; j++){
             let td = document.createElement("td");
+            td.setAttribute("id", ""+i+","+j+"");
             let style = "";
             if(!startFieldPicked && !maze[i][j].startNode){
                 let button = document.createElement("button");
@@ -158,9 +159,9 @@ function repaint(){
             }
 
             if(blockEdit){
-                if(startFieldPicked && j < maze[i].length-1){
+                if(startFieldPicked && j < maze[i].length){
                     let button = document.createElement("button");
-                    button.setAttribute("style", "position: absolute; left: 0.5%; width: 99%; height: 99%; top: .5%; z-index: 3;");
+                    button.setAttribute("style", "position: absolute; left: 0.5%; width: 99%; height: 99%; top: .5%; z-index: 1;");
                     if(!maze[i][j].blocked){
                         button.setAttribute("class", "block");
                     } else {
@@ -191,6 +192,27 @@ function repaint(){
     document.getElementById("maze").appendChild(table);
 }
 
+function repaintCell(row, col){
+    let field = document.getElementById(""+row+","+col+"");
+    let style = "";
+    style += "border: 2px solid rgba(29, 140, 204, 0.829);";
+    style += "width: " + 100 / maze[row].length + "%;";
+    style += "height: " + 100 / maze.length + "%;";
+    style += "background-color: " + maze[row][col].backgroundColor + ";";
+    style += "text-align: center;";
+    style += "position: relative;";
+    field.style = style;
+    if(maze[row][col].dist != 0 && maze[row][col].dist != Infinity){
+        let distHeader = document.createElement("h5");
+        distHeader.setAttribute("style", "font-size: 10%;");
+        let distTxt = document.createTextNode(maze[row][col].dist);
+        distHeader.appendChild(distTxt);
+        distHeader.setAttribute("style", "color: black;");
+        field.appendChild(distHeader);
+    }
+}
+
+
 function blockToggle(row, col){
     maze[row][col].blocked = !maze[row][col].blocked;
     if(maze[row][col].blocked){
@@ -198,7 +220,7 @@ function blockToggle(row, col){
     } else {
         maze[row][col].backgroundColor = "white";
     }
-    repaint();
+    repaintCell(row, col);
 }
 
 function setField(type, row, col){
@@ -211,6 +233,7 @@ function setField(type, row, col){
             startNode = [row, col];
         }
         maze[row][col].startNode = true;
+        maze[row][col].blocked = false;
         maze[row][col].backgroundColor = "rgb(60, 255, 0)";
         startFieldPicked = true;
         createCheckList(1);
@@ -223,13 +246,14 @@ function setField(type, row, col){
             endField = [row, col];
         }
         maze[row][col].endNode = true;
+        maze[row][col].blocked = false;
         maze[row][col].backgroundColor = "rgb(247, 70, 70)";
         endfieldPicked = true;
         createCheckList(3);
     } else {
         error("Wrong type of field");
     }
-    repaint();
+    repaintCell(row, col);
 }
 
 let pathFindings = ["Dijkstra", "A*", "sample"];
@@ -343,11 +367,14 @@ function djikstraPath(){
         unexplored.splice(unexplored.indexOf(lowestDistNode), 1);
         if(connected.length == 0){
             clearInterval(running);
+            if(maze[lowestDistNode[0]][lowestDistNode[1]].endNode){
+                found(lowestDistNode);
+            }
         } else if(maze[lowestDistNode[0]][lowestDistNode[1]].endNode){
             clearInterval(running);
             found(lowestDistNode);
         }
-        repaint();
+        repaintCell(lowestDistNode[0], lowestDistNode[1]);
     },secsBetweenTicks)
 }
 
