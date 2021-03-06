@@ -195,6 +195,7 @@ function repaint(){
 }
 
 function repaintCell(row, col){
+    console.log(maze[row][col]);
     let field = document.getElementById(""+row+","+col+"");
     field.innerHTML = "";
     let style = "";
@@ -207,7 +208,7 @@ function repaintCell(row, col){
     style += "overflow: hidden;"
     field.style = style;
     if(maze[row][col].dist != 0 && maze[row][col].dist != Infinity){
-        let distHeader = document.createElement("h5");
+        let distHeader = document.createElement("p");
         distHeader.setAttribute("style", "font-size: 10%; margin: 0px; padding: 0px;");
         let distTxt = document.createTextNode(maze[row][col].dist);
         distHeader.appendChild(distTxt);
@@ -370,58 +371,105 @@ function djikstraPath(doublePath){
     let visited = [];
     connected = neighbours(0, connected, row, col);
     running = window.setInterval(function(){
-        let lowest = findLowestDist(connected); //returns object with all the information lowestdist, lowestdisnode and lowestdistindex
         let endLowest;
 
-        maze[lowest.lowestDistNode[0]][lowest.lowestDistNode[1]].backgroundColor = "green";
-        maze[lowest.lowestDistNode[0]][lowest.lowestDistNode[1]].dist = lowest.lowestDist;
-        maze[lowest.lowestDistNode[0]][lowest.lowestDistNode[1]].visited = true;
-        visited.push([lowest.lowestDistNode[0], lowest.lowestDistNode[1]]);
-        connected.splice(lowest.lowestDistIndex, 1);
-        connected = neighbours(maze[lowest.lowestDistNode[0]][lowest.lowestDistNode[1]].dist, connected, lowest.lowestDistNode[0], lowest.lowestDistNode[1], "start");
-        unexplored.splice(unexplored.indexOf(lowest.lowestDistNode), 1);
+        maze[connected[0][0]][connected[0][1]].backgroundColor = "green";
+        maze[connected[0][0]][connected[0][1]].visited = true;
+        visited.push([connected[0][0], connected[0][1]]);
+        connected = neighbours(maze[connected[0][0]][connected[0][1]].dist, connected, connected[0][0], connected[0][1], "start");
+        unexplored.splice(unexplored.indexOf(connected[0]), 1);
 
-        if(doublePath){
-            endLowest = findLowestDist(endConnected);
-            maze[endLowest.lowestDistNode[0]][endLowest.lowestDistNode[1]].backgroundColor = "rgb(219, 111, 111)";
-            maze[endLowest.lowestDistNode[0]][endLowest.lowestDistNode[1]].dist = endLowest.lowestDist;
-            maze[endLowest.lowestDistNode[0]][endLowest.lowestDistNode[1]].visited = true;
-            endVisited.push([endLowest.lowestDistNode[0], endLowest.lowestDistNode[1]]);
-            endConnected.splice(endLowest.lowestDistIndex, 1);
-            endConnected = neighbours(maze[endLowest.lowestDistNode[0]][endLowest.lowestDistNode[1]].dist, endConnected, endLowest.lowestDistNode[0], endLowest.lowestDistNode[1], "end");
-            endUnexplored.splice(unexplored.indexOf(endLowest.lowestDistNode), 1);
+        let check = checkNeigbours(connected[0][0], connected[0][1], "start");
+
+        repaintCell(connected[0][0], connected[0][1]);
+        connected.shift();
+
+        if(doublePath && !check){
+            maze[endConnected[0][0]][endConnected[0][1]].backgroundColor = "rgb(219, 111, 111)";
+            maze[endConnected[0][0]][endConnected[0][1]].visited = true;
+            endVisited.push([endConnected[0][0], endConnected[0][1]]);
+            endConnected = neighbours(maze[endConnected[0][0]][endConnected[0][1]].dist, endConnected, endConnected[0][0], endConnected[0][1], "end");
+            endUnexplored.splice(unexplored.indexOf(endConnected[0]), 1);
+            
+            if(checkNeigbours(endConnected[0][0], endConnected[0][1], "end")){
+                clearInterval(running);
+                found(endConnected[0]);
+            }
+            repaintCell(endConnected[0][0], endConnected[0][1]);
+            endConnected.shift();
+        } else if (doublePath && check){
+            clearInterval(running);
+            found(connected[0]);
         }
         if(connected.length == 0 && !double || connected.length == 0 && endConnected.length == 0){
             clearInterval(running);
-            if(maze[lowest.lowestDistNode[0]][lowest.lowestDistNode[1]].endNode){
-                found(lowest.lowestDistNode);
+            if(maze[connected[0][0]][connected[0][1]].endNode){
+                found(connected[0]);
             }
-        } else if(maze[lowest.lowestDistNode[0]][lowest.lowestDistNode[1]].endNode){
+        } 
+        if(maze[connected[0][0]][connected[0][1]].endNode){
             clearInterval(running);
-            found(lowest.lowestDistNode);
-        }
-
-        repaintCell(lowest.lowestDistNode[0], lowest.lowestDistNode[1]);
-        if(doublePath){
-            repaintCell(endLowest.lowestDistNode[0], endLowest.lowestDistNode[1]);
+            found(connected[0]);
         }
     },secsBetweenTicks)
 }
 
-function findLowestDist(connected){
-    let lowestDist = Infinity;
-    let lowestDistNode = undefined;
-    let lowestDistIndex = undefined;
-    for(let i = 0; i < connected.length; i++){
-        //calculating the manhatten distance = the nondiagonal steps to the square
-        if(maze[connected[i][0]][connected[i][1]].dist < lowestDist){
-            lowestDist = maze[connected[i][0]][connected[i][1]].dist;
-            lowestDistNode = connected[i];
-            lowestDistIndex = i;
+function checkNeigbours(row, col, current){
+    if(current == "start"){
+        if(col > 0){
+            if(maze[row][col-1].connectedTo == "end" && maze[row][col-1].visited && !maze[row][col-1].blocked){
+                console.log("start 1")
+                return true;
+            }
+        } 
+        if(row > 0){
+            if(maze[row-1][col].connectedTo == "end" && maze[row-1][col].visited && !maze[row-1][col].blocked){
+                console.log("start 2")
+                return true;
+            } 
         }
+        if(col < maze[0].length-1){
+            if(maze[row][col+1].connectedTo == "end" && maze[row][col+1].visited && !maze[row][col+1].blocked){
+                console.log("start 3")
+                return true;
+            }
+        }
+        if(row < maze.length-1){
+            if(maze[row+1][col].connectedTo == "end" && maze[row+1][col].visited && !maze[row+1][col].blocked){
+                console.log("start 4")
+                return true;
+            }
+        }
+    } else if(current == "end"){
+        if(col > 0){
+            if(maze[row][col-1].connectedTo == "start" && maze[row][col-1].visited && !maze[row][col-1].blocked){
+                console.log("end 1")
+                return true;
+            }
+        } 
+        if(row > 0){
+            if(maze[row-1][col].connectedTo == "start" && maze[row-1][col].visited && !maze[row-1][col].blocked){
+                console.log("end 2")
+                return true;
+            } 
+        }
+        if(col < maze[0].length-1){
+            if(maze[row][col+1].connectedTo == "start" && maze[row][col+1].visited && !maze[row][col+1].blocked){
+                console.log("end 3")
+                return true;
+            }
+        }
+        if(row < maze.length-1){
+            if(maze[row+1][col].connectedTo == "start" && maze[row+1][col].visited && !maze[row+1][col].blocked){
+                console.log("end 4")
+                return true;
+            }
+        }
+    } else {
+        return false;
     }
-    return {lowestDist: lowestDist, lowestDistNode: lowestDistNode, lowestDistIndex: lowestDistIndex};
 }
+
 
 function neighbours(distance, connected, row, col, beginningNode){
     if(col > 0){
@@ -431,14 +479,6 @@ function neighbours(distance, connected, row, col, beginningNode){
             maze[row][col-1].dist = distance+1;
             maze[row][col-1].prev = [row, col];
             maze[row][col-1].connectedTo = beginningNode;
-        } else if(!maze[row][col-1].blocked && !maze[row][col-1].startNode && !maze[row][col-1].endNode && maze[row][col-1].visited && maze[row][col-1].connectedTo != beginningNode){
-            if(beginningNode == "start" && maze[row][col-1].connectedTo == "end" || beginningNode == "end" && maze[row][col-1].connectedTo == "start"){
-                clearInterval(running);
-                found([row, col-1]);
-                found([row, col]);
-                console.log("1 " + beginningNode);
-                return false;
-            }
         }
     }
     if(row > 0){
@@ -448,14 +488,6 @@ function neighbours(distance, connected, row, col, beginningNode){
             maze[row-1][col].dist = distance+1;
             maze[row-1][col].prev = [row, col];
             maze[row-1][col].connectedTo = beginningNode;
-        } else if(!maze[row-1][col].blocked && !maze[row-1][col].startNode && !maze[row-1][col].endNode && maze[row-1][col].visited && maze[row-1][col].connectedTo != beginningNode){
-            if(beginningNode == "start" && maze[row-1][col].connectedTo == "end" || beginningNode == "end" && maze[row-1][col].connectedTo == "start"){
-                clearInterval(running);
-                found([row-1, col]);
-                found([row, col]);
-                console.log("2 " + beginningNode);
-                return false;
-            }
         }
     }
     if(col < maze[0].length-1){
@@ -465,14 +497,6 @@ function neighbours(distance, connected, row, col, beginningNode){
             maze[row][col+1].dist = distance+1;
             maze[row][col+1].prev = [row, col];
             maze[row][col+1].connectedTo = beginningNode;
-        } else if(!maze[row][col+1].blocked && !maze[row][col+1].startNode && !maze[row][col+1].endNode && maze[row][col+1].visited && maze[row][col+1].connectedTo != beginningNode){
-            if(beginningNode == "start" && maze[row][col+1].connectedTo == "end" || beginningNode == "end" && maze[row][col+1].connectedTo == "start"){
-                clearInterval(running);
-                found([row, col+1]);
-                found([row, col]);
-                console.log("3 " + beginningNode);
-                return false;
-            }
         }
     }
     if(row < maze.length-1){
@@ -482,14 +506,6 @@ function neighbours(distance, connected, row, col, beginningNode){
             maze[row+1][col].dist = distance+1;
             maze[row+1][col].prev = [row, col];
             maze[row+1][col].connectedTo = beginningNode;
-        } else if(!maze[row+1][col].blocked && !maze[row+1][col].startNode && !maze[row+1][col].endNode && maze[row+1][col].visited){
-            if(beginningNode == "start" && maze[row+1][col].connectedTo == "end" || beginningNode == "end" && maze[row+1][col].connectedTo == "start"){
-                clearInterval(running);
-                found([row+1, col]);
-                found([row, col]);
-                console.log("4 " + beginningNode);
-                return false;
-            }
         }
     }
 
@@ -511,6 +527,10 @@ function found(node){
         }
         prev = maze[prev[0]][prev[1]].prev;
     }
+}
+
+function doubleFound(node, endnode){
+    found(node);
 }
 
 
