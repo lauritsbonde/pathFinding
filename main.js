@@ -195,7 +195,6 @@ function repaint(){
 }
 
 function repaintCell(row, col){
-    console.log(maze[row][col]);
     let field = document.getElementById(""+row+","+col+"");
     field.innerHTML = "";
     let style = "";
@@ -382,24 +381,21 @@ function djikstraPath(doublePath){
         let check = checkNeigbours(connected[0][0], connected[0][1], "start");
 
         repaintCell(connected[0][0], connected[0][1]);
-        connected.shift();
 
-        if(doublePath && !check){
+        if(doublePath && check == false){
             maze[endConnected[0][0]][endConnected[0][1]].backgroundColor = "rgb(219, 111, 111)";
             maze[endConnected[0][0]][endConnected[0][1]].visited = true;
             endVisited.push([endConnected[0][0], endConnected[0][1]]);
             endConnected = neighbours(maze[endConnected[0][0]][endConnected[0][1]].dist, endConnected, endConnected[0][0], endConnected[0][1], "end");
             endUnexplored.splice(unexplored.indexOf(endConnected[0]), 1);
-            
-            if(checkNeigbours(endConnected[0][0], endConnected[0][1], "end")){
+            if(checkNeigbours(endConnected[0][0], endConnected[0][1], "end") != false){
                 clearInterval(running);
                 found(endConnected[0]);
             }
             repaintCell(endConnected[0][0], endConnected[0][1]);
-            endConnected.shift();
-        } else if (doublePath && check){
+        } else if (doublePath && check != false){
             clearInterval(running);
-            found(connected[0]);
+            doubleFound([connected[0][0], connected[0][1]], check);
         }
         if(connected.length == 0 && !double || connected.length == 0 && endConnected.length == 0){
             clearInterval(running);
@@ -411,6 +407,10 @@ function djikstraPath(doublePath){
             clearInterval(running);
             found(connected[0]);
         }
+        connected.shift();
+        if(doublePath){
+            endConnected.shift();
+        }
     },secsBetweenTicks)
 }
 
@@ -419,55 +419,56 @@ function checkNeigbours(row, col, current){
         if(col > 0){
             if(maze[row][col-1].connectedTo == "end" && maze[row][col-1].visited && !maze[row][col-1].blocked){
                 console.log("start 1")
-                return true;
+                return [row, col-1];
             }
         } 
         if(row > 0){
             if(maze[row-1][col].connectedTo == "end" && maze[row-1][col].visited && !maze[row-1][col].blocked){
                 console.log("start 2")
-                return true;
+                return [row-1, col];
             } 
         }
         if(col < maze[0].length-1){
             if(maze[row][col+1].connectedTo == "end" && maze[row][col+1].visited && !maze[row][col+1].blocked){
                 console.log("start 3")
-                return true;
+                return [row, col+1];
             }
         }
         if(row < maze.length-1){
             if(maze[row+1][col].connectedTo == "end" && maze[row+1][col].visited && !maze[row+1][col].blocked){
                 console.log("start 4")
-                return true;
+                return [row+1, col];
             }
         }
     } else if(current == "end"){
         if(col > 0){
             if(maze[row][col-1].connectedTo == "start" && maze[row][col-1].visited && !maze[row][col-1].blocked){
                 console.log("end 1")
-                return true;
+                return [row, col-1];
             }
         } 
         if(row > 0){
             if(maze[row-1][col].connectedTo == "start" && maze[row-1][col].visited && !maze[row-1][col].blocked){
                 console.log("end 2")
-                return true;
+                return [row-1, col];
             } 
         }
         if(col < maze[0].length-1){
             if(maze[row][col+1].connectedTo == "start" && maze[row][col+1].visited && !maze[row][col+1].blocked){
                 console.log("end 3")
-                return true;
+                return [row, col+1];
             }
         }
         if(row < maze.length-1){
             if(maze[row+1][col].connectedTo == "start" && maze[row+1][col].visited && !maze[row+1][col].blocked){
                 console.log("end 4")
-                return true;
+                return [row+1, col];
             }
         }
     } else {
         return false;
     }
+    return false;
 }
 
 
@@ -514,14 +515,11 @@ function neighbours(distance, connected, row, col, beginningNode){
 
 function found(node){
     maze[node[0]][node[1]].backgroundColor = "yellow";
-    console.log(maze[node[0]][node[1]]);
-    console.log(node)
     repaintCell(node[0],node[1]);
     let ints = 0;
     let prev = maze[node[0]][node[1]].prev;
     while(prev[0] != null || prev[1] != null){
         if(!maze[prev[0]][prev[1]].startNode  && !maze[prev[0]][prev[1]].endNode){
-            console.log(node);
             maze[prev[0]][prev[1]].backgroundColor = "yellow";
             repaintCell(prev[0], prev[1]);
         }
@@ -531,6 +529,21 @@ function found(node){
 
 function doubleFound(node, endnode){
     found(node);
+    let dist = maze[node[0]][node[1]].dist + 1;
+    let prev = [endnode[0], endnode[1]];
+
+    console.log(node + " " + endnode + " " + prev);
+
+    while(prev[0] != null || prev[1] != null){
+        if(!maze[prev[0]][prev[1]].startNode  && !maze[prev[0]][prev[1]].endNode){
+            console.log("other");
+            maze[prev[0]][prev[1]].dist = dist;
+            dist++;
+            maze[prev[0]][prev[1]].backgroundColor = "yellow";
+            repaintCell(prev[0], prev[1]);
+        }
+        prev = maze[prev[0]][prev[1]].prev;
+    }
 }
 
 
