@@ -42,11 +42,9 @@ let endField = null;
 function makeMaze(how){
     document.getElementById("maze").innerHTML = "";
 
-    let inrows = document.getElementById("rows").value;
-    let incols = document.getElementById("cols").value;
     maze = [];
-    rows = inrows;
-    cols = incols;
+    rows = 10;
+    cols = 10;
     newMaze = true;
     
     if(newMaze){
@@ -65,8 +63,10 @@ function makeMaze(how){
         }
         newMaze = false;
     }
+    setField("start", Math.floor(Math.random() * rows), Math.floor(Math.random() * cols));
+    setField("end", Math.floor(Math.random() * rows), Math.floor(Math.random() * cols));
     if(how == "closed" || how == "open"){
-        createCheckList(0);
+        createCheckList(1);
         repaint();  
     }
 }
@@ -81,18 +81,17 @@ function createCheckList(current){
     document.getElementById("checklistCon").innerHTML = "";
     let ul = document.createElement("ul");
     ul.setAttribute("id", "checklist");
-    ul.setAttribute("style", "list-style-type: none;");
+    ul.setAttribute("style", "list-style-type: none; display: inline-block;");
     let items = ["Choose startfield", "Edit blocks", "Choose endfield", "Finish"];
     for(let i = 0; i < items.length; i++){
         let li = document.createElement("li");
         let liTxt = document.createTextNode(items[i]);
         if(current == i){
-            li.setAttribute("class", "activeStage");
+            li.setAttribute("class", "activeStage card-text");
         } else {
-            li.setAttribute("class", "otherStage");
+            li.setAttribute("class", "otherStage card-text");
             li.setAttribute("onclick", "createCheckList("+i+")");
         }
-
         li.appendChild(liTxt);
         ul.appendChild(li);
     }
@@ -100,7 +99,6 @@ function createCheckList(current){
     if(current == 0 && startNode != null){
         maze[startNode[0]][startNode[1]].startNode = false;
         startFieldPicked = false;
-        startNode = null;
         blockEdit = false;
         pickEndfield = false;
         repaint();
@@ -118,14 +116,17 @@ function createCheckList(current){
         let buttons = ["Finish", "Edit"];
         for(let i = 0; i < buttons.length; i++){
             let but = document.createElement("button");
+            but.setAttribute("type", "button");
             if(buttons[i] == "Finish"){
                 but.setAttribute("onclick", "finishMap()");
+                but.setAttribute("class", "btn btn-success");
             } else {
                 but.setAttribute("onclick", "createCheckList(1)");
+                but.setAttribute("class", "btn btn-danger");
             }
             let butTxt = document.createTextNode(buttons[i]);
             but.appendChild(butTxt);
-            but.setAttribute("style", "display: inline-block;");
+            but.setAttribute("style", "display: inline-block; vertical-align: middle;");
             document.getElementById("checklistCon").appendChild(but);
         }
         repaint();
@@ -137,6 +138,7 @@ function repaint(){
     document.getElementById("maze").innerHTML = "";
     let table = document.createElement("table");
     table.setAttribute("style", "height: 100%; width: 100%; padding:0px; border-collapse: collapse; border: 2px solid black;");
+    table.setAttribute("class", "table");
     for(let i = 0; i < maze.length; i++){
         let row = document.createElement("tr");
         row.setAttribute("style", "width:100vw; heigth: "+100/cols+" vh");
@@ -145,39 +147,11 @@ function repaint(){
             td.setAttribute("id", ""+i+","+j+"");
             let style = "";
             if(!startFieldPicked && !maze[i][j].startNode){
-                let button = document.createElement("button");
-                button.setAttribute("style", "position: absolute; left: 10%; width: 80%; height: 80%; top: 10%;");
-                button.setAttribute("class", "startFieldButtons");
-                button.setAttribute("onclick", "setField('start',"+i+", "+j+")");
-                td.appendChild(button);
-            }
-            if(pickEndfield && !maze[i][j].startNode){
-                let button = document.createElement("button");
-                button.setAttribute("style", "position: absolute; left: 10%; width: 80%; height: 80%; top: 10%;");
-                button.setAttribute("class", "fieldButtons");
-                button.setAttribute("onclick", "setField('end',"+i+", "+j+")");
-                td.appendChild(button);
-            }
-
-            if(blockEdit){
-                if(startFieldPicked && j < maze[i].length){
-                    let button = document.createElement("button");
-                    button.setAttribute("style", "position: absolute; left: 0.5%; width: 99%; height: 99%; top: .5%; z-index: 1;");
-                    if(!maze[i][j].blocked){
-                        button.setAttribute("class", "block");
-                    } else {
-                        button.setAttribute("class", "unblock");
-                    }
-                    button.setAttribute("onclick", "blockToggle("+i+", "+j+")");
-                    td.appendChild(button);
-                }
-            }
-            if(maze[i][j].dist != 0 && maze[i][j].dist != Infinity){
-                let distHeader = document.createElement("h3");
-                let distTxt = document.createTextNode(maze[i][j].dist);
-                distHeader.appendChild(distTxt);
-                distHeader.setAttribute("style", "font-size: 10%; margin: 0px; padding: 0px;");
-                td.appendChild(distHeader);
+                td.setAttribute("onclick", "setField('start',"+i+", "+j+")")
+            } else if(pickEndfield && !maze[i][j].startNode){
+                td.setAttribute("onclick", "setField('end',"+i+", "+j+")");
+            } else {
+                td.setAttribute("onclick", "blockToggle("+i+","+j+")");
             }
 
             style += "border: 2px solid rgba(29, 140, 204, 0.829);";
@@ -218,13 +192,15 @@ function repaintCell(row, col){
 
 
 function blockToggle(row, col){
-    maze[row][col].blocked = !maze[row][col].blocked;
-    if(maze[row][col].blocked){
-        maze[row][col].backgroundColor = "black";
-    } else {
-        maze[row][col].backgroundColor = "white";
+    if(blockEdit){
+        maze[row][col].blocked = !maze[row][col].blocked;
+        if(maze[row][col].blocked){
+            maze[row][col].backgroundColor = "black";
+        } else {
+            maze[row][col].backgroundColor = "white";
+        }
+        repaintCell(row, col);
     }
-    repaintCell(row, col);
 }
 
 function setField(type, row, col){
@@ -234,6 +210,7 @@ function setField(type, row, col){
         } else {
             maze[startNode[0]][startNode[1]].startNode = false;
             maze[startNode[0]][startNode[1]].backgroundColor = "white";
+            
             startNode = [row, col];
         }
         maze[row][col].startNode = true;
@@ -263,7 +240,15 @@ function setField(type, row, col){
 let pathFindings = ["Dijkstra", "Double Djikstra", "A*", "sample"];
 let secsBetweenTicks = 250;
 function finishMap(){
-    let pathCon = document.createElement("div");
+    let pathCon;
+    if(document.getElementById("pathCon") == null){
+        pathCon = document.createElement("div");
+    } else {
+        pathCon = document.getElementById("pathCon");
+        pathCon.innerHTML = "";
+    }
+    pathCon.setAttribute("id", "pathCon");
+    pathCon.setAttribute("style", "display: inline-block; float: right;");
     for(let i = 0; i < pathFindings.length; i++){
         let input = document.createElement("input");
         input.setAttribute("type", "checkbox");
@@ -278,36 +263,16 @@ function finishMap(){
         pathCon.append(input, label);
     }
 
-    let range = document.createElement("input");
-    range.setAttribute("type", "range");
-    range.setAttribute("id", "speedRange");
-    range.setAttribute("name", "speedRange");
-    range.setAttribute("min", "50");
-    range.setAttribute("max", "1000");
-    range.setAttribute("onchange", "newSpeed()");
-    range.setAttribute("value", secsBetweenTicks);
-    range.setAttribute("style", "display: block;");
-    let rangelbl = document.createElement("label");
-    rangelbl.setAttribute("style", "display: block;");
-    let rangeTxt = document.createTextNode("Milliseconds between ticks: ");
-    let span = document.createElement("span");
-    span.setAttribute("id", "secsBetween");
-    let spanTxt = document.createTextNode(secsBetweenTicks)
-    span.appendChild(spanTxt);
-    rangelbl.appendChild(rangeTxt);
-    rangelbl.appendChild(span);
-    rangelbl.setAttribute("for", "speedRange");
 
-    pathCon.append(rangelbl, range);
-
+    document.getElementById("checklistCon").appendChild(pathCon);
     
     let runbut = document.createElement("button");
     let runTxt = document.createTextNode("Run!");
     runbut.appendChild(runTxt);
     runbut.setAttribute("onclick", "runPath()");
-    pathCon.appendChild(runbut);
+    runbut.setAttribute("style", "float: right; margin-right: 5%; display: inline-block;")
+    document.getElementById("checklistCon").appendChild(runbut);
 
-    document.getElementById("checklistCon").appendChild(pathCon);
 }
 
 function newSpeed(){
