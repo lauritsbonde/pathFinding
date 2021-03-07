@@ -137,11 +137,18 @@ function createCheckList(current){
     }
 }
 
+let mouseDown = false;
+function mouseDownToggle(){
+    mouseDown = !mouseDown;
+}
 
 function repaint(){
     document.getElementById("maze").innerHTML = "";
     let table = document.createElement("table");
     table.setAttribute("class", "table");
+    table.setAttribute("onmousedown", "mouseDownToggle()");
+    table.setAttribute("onmouseup", "mouseDownToggle()");
+    
     for(let i = 0; i < maze.length; i++){
         let row = document.createElement("tr");
         for(let j = 0; j < maze[i].length; j++){
@@ -153,7 +160,7 @@ function repaint(){
             } else if(pickEndfield && !maze[i][j].startNode){
                 td.setAttribute("onclick", "setField('end',"+i+", "+j+")");
             } else {
-                td.setAttribute("onclick", "setField('block', "+i+","+j+")");
+                td.setAttribute("onmouseover", "setField('block', "+i+","+j+")");
             }
 
             style += "border: 2px solid rgba(29, 140, 204, 0.829);";
@@ -177,8 +184,8 @@ function repaintCell(row, col){
     field.innerHTML = "";
     let style = "";
     style += "border: 2px solid rgba(29, 140, 204, 0.829);";
-    style += "width: " + 100 / maze[row].length + "%;";
-    style += "height: " + 100 / maze.length + "%;";
+    style += "width: " + Math.round(document.getElementById("maze").offsetWidth / 30) + "px;";
+    style += "height: " + Math.round(document.getElementById("maze").offsetHeight / 42) + "px;";
     style += "background-color: " + maze[row][col].backgroundColor + ";";
     style += "text-align: center;";
     style += "position: relative;";
@@ -196,54 +203,56 @@ function repaintCell(row, col){
 }
 
 function setField(type, row, col){
-    console.log(startNode + " " + endField);
-    if(type == "start"){
-        if(startNode == null){
-            startNode = [row, col];
+    if(mouseDown){
+        if(type == "start"){
+            if(startNode == null){
+                startNode = [row, col];
+            } else {
+                maze[startNode[0]][startNode[1]].startNode = false;
+                maze[startNode[0]][startNode[1]].backgroundColor = "white";
+                repaintCell(startNode[0], startNode[1]);
+                startNode = [row, col];
+            }
+            maze[row][col].startNode = true;
+            maze[row][col].blocked = false;
+            maze[row][col].backgroundColor = "rgb(60, 255, 0)";
+            startFieldPicked = true;
+            createCheckList(1);
+        } else if(type == "end") {
+            if(endField == null){
+                endField = [row, col];
+            } else {
+                maze[endField[0]][endField[1]].endNode = false;
+                maze[endField[0]][endField[1]].backgroundColor = "white";
+                repaintCell(endField[0], endField[1]);
+                endField = [row, col];
+            }
+            maze[row][col].endNode = true;
+            maze[row][col].blocked = false;
+            maze[row][col].backgroundColor = "rgb(247, 70, 70)";
+            endfieldPicked = true;
+            createCheckList(1);
+        } else if(type == "block" && blockEdit){
+            maze[row][col].blocked = !maze[row][col].blocked;
+            if(maze[row][col].blocked){
+                maze[row][col].backgroundColor = "black";
+            } else {
+                maze[row][col].backgroundColor = "white";
+            }
+        }  else if(type == "block" && !blockEdit && pickStartField){
+            setField("start", row, col);
+        } else if(type == "block" && !blockEdit && pickEndfield){
+            setField("end", row, col);
         } else {
-            maze[startNode[0]][startNode[1]].startNode = false;
-            maze[startNode[0]][startNode[1]].backgroundColor = "white";
-            repaintCell(startNode[0], startNode[1]);
-            startNode = [row, col];
+            error("Wrong type of field");
         }
-        maze[row][col].startNode = true;
-        maze[row][col].blocked = false;
-        maze[row][col].backgroundColor = "rgb(60, 255, 0)";
-        startFieldPicked = true;
-        createCheckList(1);
-    } else if(type == "end") {
-        if(endField == null){
-            endField = [row, col];
-        } else {
-            maze[endField[0]][endField[1]].endNode = false;
-            maze[endField[0]][endField[1]].backgroundColor = "white";
-            repaintCell(endField[0], endField[1]);
-            endField = [row, col];
-        }
-        maze[row][col].endNode = true;
-        maze[row][col].blocked = false;
-        maze[row][col].backgroundColor = "rgb(247, 70, 70)";
-        endfieldPicked = true;
-        createCheckList(1);
-    } else if(type == "block" && blockEdit){
-        maze[row][col].blocked = !maze[row][col].blocked;
-        if(maze[row][col].blocked){
-            maze[row][col].backgroundColor = "black";
-        } else {
-            maze[row][col].backgroundColor = "white";
-        }
-    }  else if(type == "block" && !blockEdit && pickStartField){
-        setField("start", row, col);
-    } else if(type == "block" && !blockEdit && pickEndfield){
-        setField("end", row, col);
-    } else {
-        error("Wrong type of field");
+        repaintCell(row, col);
     }
-    repaintCell(row, col);
 }
 
-let pathFindings = ["Dijkstra", "Double Djikstra", "A*", "sample"];
+let pathFindings = ["Dijkstra", "Double Djikstra", "A*"];
 let secsBetweenTicks = 250;
+let activePath = "Dijkstra";
 function finishMap(){
     let pathCon;
     if(document.getElementById("pathCon") == null){
@@ -253,21 +262,37 @@ function finishMap(){
         pathCon.innerHTML = "";
     }
     pathCon.setAttribute("id", "pathCon");
-    pathCon.setAttribute("style", "display: inline-block; float: right;");
+    pathCon.setAttribute("style", "display: block; float: right; width:35vw");
     for(let i = 0; i < pathFindings.length; i++){
-        let input = document.createElement("input");
-        input.setAttribute("type", "checkbox");
-        input.setAttribute("name", pathFindings[i].replace(" ", ""));
-        input.setAttribute("id", pathFindings[i].replace(" ", ""));
-        
-        let label = document.createElement("label");
+        let path = document.createElement("p");
+        path.setAttribute("onclick", "changePath("+i+")");
+        if(activePath == pathFindings[i]){
+            path.setAttribute("class", "activeStage");
+        } else {
+            path.setAttribute("class", "otherStage");
+        }
+        path.setAttribute("style", "display: inline-block; margin-right:5%;");
         let labelTxt = document.createTextNode(pathFindings[i]);
-        label.appendChild(labelTxt);
-        label.setAttribute("for", pathFindings[i].replace(" ", ""));
-
-        pathCon.append(input, label);
+        path.appendChild(labelTxt);
+        pathCon.appendChild(path);
     }
-
+    
+    let speed = document.createElement("div");
+    speed.setAttribute("id", "speed");
+    speed.setAttribute("style", "display: inline-block");
+    let speeds = ["Very slow", "Slow", "Medium", "High", "Very High"];
+    let speedsValue = [400, 200, 100, 50, 25];
+    let select = document.createElement("select");
+    select.setAttribute("style", "display: inline-block;")
+    select.setAttribute("id", "speedSelector");
+    for(let i = 0; i < speeds.length; i++){
+        let option = document.createElement("option");
+        option.setAttribute("value", speedsValue[i]);
+        let fieldTxt = document.createTextNode(speeds[i]);
+        option.appendChild(fieldTxt);
+        select.appendChild(option);
+    }
+    speed.appendChild(select);
 
     document.getElementById("checklistCon").appendChild(pathCon);
     
@@ -275,9 +300,22 @@ function finishMap(){
     let runTxt = document.createTextNode("Run!");
     runbut.appendChild(runTxt);
     runbut.setAttribute("onclick", "runPath()");
-    runbut.setAttribute("style", "float: right; margin-right: 5%; display: inline-block;")
-    document.getElementById("checklistCon").appendChild(runbut);
+    runbut.setAttribute("style", "float: right; margin-right: 5%; display: block;")
 
+    document.getElementById("pathCon").appendChild(speed);
+    document.getElementById("pathCon").appendChild(runbut);
+
+}
+
+function changePath(id){
+    if(id == 0) {
+        activePath = "Dijkstra";
+    } else if(id == 1){
+        activePath = "Double Djikstra";
+    } else if(id == 2){
+        activePath = "A*";
+    }
+    finishMap();
 }
 /* this does not work for zoomin and panning
 let scrolling = false;
@@ -305,15 +343,13 @@ el.onwheel = zoom;
 */
 
 function runPath(){
-    let runDjikstra = document.getElementById("Dijkstra").checked;
-    let runDoubleDjikstra = document.getElementById("DoubleDjikstra").checked;
-    let runAstart = document.getElementById("A*").checked;
-    let runSample = document.getElementById("sample").checked;
-
-    if(runDjikstra){
+    let speed  = document.getElementById("speedSelector").value;
+    if(activePath == "Dijkstra"){
+        secsBetweenTicks = speed;
         djikstraPath(false);
     }
-    if(runDoubleDjikstra){
+    if(activePath == "Double Djikstra"){
+        secsBetweenTicks = speed;
         djikstraPath(true);
     }
 

@@ -17,13 +17,20 @@
     </head>
     <body onload="makeMaze('open')">
 
-        <div class="container-fluid bg-primary text-white fixed-top" id="checklistCon"></div>
+        <div class="container-fluid bg-primary text-white fixed-top p-3" id="checklistCon"></div>
         
-        <div class="container-fluid m-0 p-0">
+        <div class="container-fluid m-0 p-2" style="height: 80vh;">
             <div class="row justify-content-center">
-                <div class="table p-0 m-0 col-sm-12 col-md-12 col-lg-10 col-xl-8" id="maze"></div>
+                <div class="table p-0 m-0 col-sm-12 col-md-12 col-lg-10 col-xl-8" id="maze" style="height: 78vh;"></div>
             </div>
         </div>
+
+        <div class="footer">
+            <footer class="footer bg-secondary fixed-bottom pt-2 text-white" style="text-align: center; height: 3vh;">
+                <h5>Laurits Bonde</h5>
+            </footer>
+        </div>
+
         
         <script src="djikstra.js"></script>
         <script src="main.js"></script>
