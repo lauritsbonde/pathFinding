@@ -1,18 +1,3 @@
-function runPath(){
-    let runDjikstra = document.getElementById("Dijkstra").checked;
-    let runDoubleDjikstra = document.getElementById("DoubleDjikstra").checked;
-    let runAstart = document.getElementById("A*").checked;
-    let runSample = document.getElementById("sample").checked;
-
-    if(runDjikstra){
-        djikstraPath(false);
-    }
-    if(runDoubleDjikstra){
-        djikstraPath(true);
-    }
-
-}
-
 let running;
 
 //doublePath is a boolean, false = from startnode, true = from both startnode and endnode

@@ -43,8 +43,8 @@ function makeMaze(how){
     document.getElementById("maze").innerHTML = "";
 
     maze = [];
-    rows = 10;
-    cols = 10;
+    rows = 40;
+    cols = 30;
     newMaze = true;
     
     if(newMaze){
@@ -61,13 +61,22 @@ function makeMaze(how){
             }
             maze.push(mazeRow);
         }
+        let randstart = [Math.floor(Math.random() * rows),Math.floor(Math.random() * cols)];
+        maze[randstart[0]][randstart[1]].startNode = true;
+        maze[randstart[0]][randstart[1]].backgroundColor = "rgb(60, 255, 0)";
+        startFieldPicked = true;
+        startNode = randstart;
+
+        let randEnd = [Math.floor(Math.random() * rows),Math.floor(Math.random() * cols)]
+        maze[randEnd[0]][randEnd[1]].endNode = true;
+        maze[randEnd[0]][randEnd[1]].backgroundColor = "red";
+        endfieldPicked = true;
+        endField = randEnd;
         newMaze = false;
     }
-    setField("start", Math.floor(Math.random() * rows), Math.floor(Math.random() * cols));
-    setField("end", Math.floor(Math.random() * rows), Math.floor(Math.random() * cols));
     if(how == "closed" || how == "open"){
         createCheckList(1);
-        repaint();  
+        repaint();
     }
 }
 
@@ -82,7 +91,7 @@ function createCheckList(current){
     let ul = document.createElement("ul");
     ul.setAttribute("id", "checklist");
     ul.setAttribute("style", "list-style-type: none; display: inline-block;");
-    let items = ["Choose startfield", "Edit blocks", "Choose endfield", "Finish"];
+    let items = ["Choose startfield", "Edit blocks", "Choose endfield"];
     for(let i = 0; i < items.length; i++){
         let li = document.createElement("li");
         let liTxt = document.createTextNode(items[i]);
@@ -96,40 +105,30 @@ function createCheckList(current){
         ul.appendChild(li);
     }
     document.getElementById("checklistCon").appendChild(ul);
+
+    let finBut = document.createElement("button");
+    finBut.setAttribute("type", "button");
+    finBut.setAttribute("class", "btn btn-success");
+    finBut.setAttribute("onclick", "finishMap()");
+    let finTxt = document.createTextNode("Finish");
+    finBut.appendChild(finTxt);
+
+    document.getElementById("checklistCon").appendChild(finBut);
+
     if(current == 0 && startNode != null){
         maze[startNode[0]][startNode[1]].startNode = false;
         startFieldPicked = false;
         blockEdit = false;
         pickEndfield = false;
-        repaint();
     } else if(current == 1 && startNode != null){
         blockEdit = true;
         pickEndfield = false;
-        repaint();
     } else if(current == 2 && startNode != null){
         blockEdit = false;
         pickEndfield = true;
-        repaint();
     } else if(current == 3 && startNode != null && endField != null){
         blockEdit = false;
         pickEndfield = false;
-        let buttons = ["Finish", "Edit"];
-        for(let i = 0; i < buttons.length; i++){
-            let but = document.createElement("button");
-            but.setAttribute("type", "button");
-            if(buttons[i] == "Finish"){
-                but.setAttribute("onclick", "finishMap()");
-                but.setAttribute("class", "btn btn-success");
-            } else {
-                but.setAttribute("onclick", "createCheckList(1)");
-                but.setAttribute("class", "btn btn-danger");
-            }
-            let butTxt = document.createTextNode(buttons[i]);
-            but.appendChild(butTxt);
-            but.setAttribute("style", "display: inline-block; vertical-align: middle;");
-            document.getElementById("checklistCon").appendChild(but);
-        }
-        repaint();
     }
 }
 
@@ -137,11 +136,9 @@ function createCheckList(current){
 function repaint(){
     document.getElementById("maze").innerHTML = "";
     let table = document.createElement("table");
-    table.setAttribute("style", "height: 100%; width: 100%; padding:0px; border-collapse: collapse; border: 2px solid black;");
     table.setAttribute("class", "table");
     for(let i = 0; i < maze.length; i++){
         let row = document.createElement("tr");
-        row.setAttribute("style", "width:100vw; heigth: "+100/cols+" vh");
         for(let j = 0; j < maze[i].length; j++){
             let td = document.createElement("td");
             td.setAttribute("id", ""+i+","+j+"");
@@ -155,8 +152,8 @@ function repaint(){
             }
 
             style += "border: 2px solid rgba(29, 140, 204, 0.829);";
-            style += "width: " + 100 / maze[i].length + "%;";
-            style += "height: " + 100 / maze.length + "%;";
+            style += "width: " + Math.round(document.getElementById("maze").offsetWidth / 30) + "px;";
+            style += "height: " + Math.round(document.getElementById("maze").offsetHeight / 42) + "px;";
             style += "background-color: " + maze[i][j].backgroundColor + ";";
             style += "text-align: center;";
             style += "overflow: hidden;"
@@ -230,7 +227,7 @@ function setField(type, row, col){
         maze[row][col].blocked = false;
         maze[row][col].backgroundColor = "rgb(247, 70, 70)";
         endfieldPicked = true;
-        createCheckList(3);
+        createCheckList(1);
     } else {
         error("Wrong type of field");
     }
@@ -274,13 +271,45 @@ function finishMap(){
     document.getElementById("checklistCon").appendChild(runbut);
 
 }
-
-function newSpeed(){
-    let speed = document.getElementById("speedRange").value;
-    document.getElementById("secsBetween").innerHTML = speed;
-    secsBetweenTicks = speed;
+/* this does not work for zoomin and panning
+let scrolling = false;
+let scale = 1;
+let side = 0;
+function zoom(event){
+    event.preventDefault();
+    event.stopPropagation();
+    //these two lines sets the boundries of the zoom
+    let newscale = scale + event.wheelDeltaY/100;
+    scale = Math.min(Math.max(1, newscale), 4);
+    let style = document.getElementById("maze").style.transform;
+    console.log(event.clientX + " " + event.clientY);
+    if(event.wheelDeltaY != 0){
+        document.getElementById("maze").style = "transform: scale("+scale+") translate("+-event.clientX/5+"px, "+-event.clientY/5+"px)";
+    } else if (event.wheelDeltaX != 0 && scale > 1){
+        let newSide = side + (event.wheelDeltaX/5);
+        side = Math.min(Math.max(-scale*25, newSide), scale*25);
+        document.getElementById("maze").style = "transform: translate("+side+", 0px) scale("+scale+")";
+    }
 }
 
+const el = document.querySelector("#maze");
+el.onwheel = zoom;
+*/
+
+function runPath(){
+    let runDjikstra = document.getElementById("Dijkstra").checked;
+    let runDoubleDjikstra = document.getElementById("DoubleDjikstra").checked;
+    let runAstart = document.getElementById("A*").checked;
+    let runSample = document.getElementById("sample").checked;
+
+    if(runDjikstra){
+        djikstraPath(false);
+    }
+    if(runDoubleDjikstra){
+        djikstraPath(true);
+    }
+
+}
 
 function error(e){
     console.log("Error: " + e);
