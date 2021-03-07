@@ -44,8 +44,8 @@ function makeMaze(how){
     document.getElementById("maze").innerHTML = "";
 
     maze = [];
-    rows = 30;
-    cols = 30;
+    rows = 40;
+    cols = 40;
     newMaze = true;
     
     if(newMaze){
