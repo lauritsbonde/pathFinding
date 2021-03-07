@@ -31,6 +31,7 @@ let Node = class{
     }
 }
 
+let pickStartField = false;
 let startFieldPicked = false;
 let startNode = null;
 
@@ -43,7 +44,7 @@ function makeMaze(how){
     document.getElementById("maze").innerHTML = "";
 
     maze = [];
-    rows = 40;
+    rows = 30;
     cols = 30;
     newMaze = true;
     
@@ -120,13 +121,17 @@ function createCheckList(current){
         startFieldPicked = false;
         blockEdit = false;
         pickEndfield = false;
+        pickStartField = true;
     } else if(current == 1 && startNode != null){
+        pickStartField = false;
         blockEdit = true;
         pickEndfield = false;
     } else if(current == 2 && startNode != null){
+        pickStartField = false;
         blockEdit = false;
         pickEndfield = true;
     } else if(current == 3 && startNode != null && endField != null){
+        pickStartField = false;
         blockEdit = false;
         pickEndfield = false;
     }
@@ -148,7 +153,7 @@ function repaint(){
             } else if(pickEndfield && !maze[i][j].startNode){
                 td.setAttribute("onclick", "setField('end',"+i+", "+j+")");
             } else {
-                td.setAttribute("onclick", "blockToggle("+i+","+j+")");
+                td.setAttribute("onclick", "setField('block', "+i+","+j+")");
             }
 
             style += "border: 2px solid rgba(29, 140, 204, 0.829);";
@@ -157,6 +162,8 @@ function repaint(){
             style += "background-color: " + maze[i][j].backgroundColor + ";";
             style += "text-align: center;";
             style += "overflow: hidden;"
+            style += "padding: 0px;";
+            style += "margin: 0px;";
             td.setAttribute("style", style + "position: relative;");
             row.appendChild(td);
         }
@@ -176,38 +183,27 @@ function repaintCell(row, col){
     style += "text-align: center;";
     style += "position: relative;";
     style += "overflow: hidden;"
+    style += "padding: 0px;";
+    style += "margin: 0px;";
     field.style = style;
     if(maze[row][col].dist != 0 && maze[row][col].dist != Infinity){
         let distHeader = document.createElement("p");
-        distHeader.setAttribute("style", "font-size: 10%; margin: 0px; padding: 0px;");
+        distHeader.setAttribute("style", "font-size: "+Math.floor(field.offsetHeight/3)+"px; margin: 0px; padding: 0px; vertical-align: middle;");
         let distTxt = document.createTextNode(maze[row][col].dist);
         distHeader.appendChild(distTxt);
-        distHeader.setAttribute("style", "color: black;");
         field.appendChild(distHeader);
     }
 }
 
-
-function blockToggle(row, col){
-    if(blockEdit){
-        maze[row][col].blocked = !maze[row][col].blocked;
-        if(maze[row][col].blocked){
-            maze[row][col].backgroundColor = "black";
-        } else {
-            maze[row][col].backgroundColor = "white";
-        }
-        repaintCell(row, col);
-    }
-}
-
 function setField(type, row, col){
+    console.log(startNode + " " + endField);
     if(type == "start"){
         if(startNode == null){
             startNode = [row, col];
         } else {
             maze[startNode[0]][startNode[1]].startNode = false;
             maze[startNode[0]][startNode[1]].backgroundColor = "white";
-            
+            repaintCell(startNode[0], startNode[1]);
             startNode = [row, col];
         }
         maze[row][col].startNode = true;
@@ -221,6 +217,7 @@ function setField(type, row, col){
         } else {
             maze[endField[0]][endField[1]].endNode = false;
             maze[endField[0]][endField[1]].backgroundColor = "white";
+            repaintCell(endField[0], endField[1]);
             endField = [row, col];
         }
         maze[row][col].endNode = true;
@@ -228,6 +225,17 @@ function setField(type, row, col){
         maze[row][col].backgroundColor = "rgb(247, 70, 70)";
         endfieldPicked = true;
         createCheckList(1);
+    } else if(type == "block" && blockEdit){
+        maze[row][col].blocked = !maze[row][col].blocked;
+        if(maze[row][col].blocked){
+            maze[row][col].backgroundColor = "black";
+        } else {
+            maze[row][col].backgroundColor = "white";
+        }
+    }  else if(type == "block" && !blockEdit && pickStartField){
+        setField("start", row, col);
+    } else if(type == "block" && !blockEdit && pickEndfield){
+        setField("end", row, col);
     } else {
         error("Wrong type of field");
     }
