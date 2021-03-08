@@ -363,7 +363,6 @@ function clearMap(){
             }
         }
     },10);
-    console.log(maze);
 }
 
 function changePath(id){

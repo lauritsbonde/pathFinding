@@ -87,7 +87,6 @@ function djikstraPath(doublePath){
                 endConnected.shift();
             }
             speed = Math.min(Math.floor(connected.length / 9) + 1, 5);
-            console.log(speed);
         }
     },secsBetweenTicks)
 }
