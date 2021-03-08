@@ -56,13 +56,14 @@ body {
     height: 7vh;
 }
 
-#pathCon {
-}
-
 #maze {
     height: 100%; 
     width: 100%; 
     padding:0px; 
     border-collapse: collapse;
     position: relative;
+}
+
+td{ 
+    transition: all .2s;
 }

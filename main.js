@@ -114,7 +114,16 @@ function createCheckList(current){
     let finTxt = document.createTextNode("Finish");
     finBut.appendChild(finTxt);
 
+    let clearBut = document.createElement("button");
+    clearBut.setAttribute("type", "button");
+    clearBut.setAttribute("class", "btn btn-danger");
+    clearBut.setAttribute("onclick", "clearMap()");
+    clearBut.setAttribute("style", "margin-left: .5%;")
+    let clearTxt = document.createTextNode("Clear");
+    clearBut.appendChild(clearTxt);
+
     document.getElementById("checklistCon").appendChild(finBut);
+    document.getElementById("checklistCon").appendChild(clearBut);
 
     if(current == 0 && startNode != null){
         maze[startNode[0]][startNode[1]].startNode = false;
@@ -138,17 +147,22 @@ function createCheckList(current){
 }
 
 let mouseDown = false;
-function mouseDownToggle(){
+function mouseDownToggle(row, col){
+    if(pickEndfield || pickStartField){
+        setField("block", row, col);
+    }
     mouseDown = !mouseDown;
+}
+
+function mouseDownFalse(){
+    mouseDown = false;
 }
 
 function repaint(){
     document.getElementById("maze").innerHTML = "";
     let table = document.createElement("table");
     table.setAttribute("class", "table");
-    table.setAttribute("onmousedown", "mouseDownToggle()");
-    table.setAttribute("onmouseup", "mouseDownToggle()");
-    
+    table.setAttribute("onmouseleave", "mouseDownFalse()");
     for(let i = 0; i < maze.length; i++){
         let row = document.createElement("tr");
         for(let j = 0; j < maze[i].length; j++){
@@ -160,6 +174,8 @@ function repaint(){
             } else if(pickEndfield && !maze[i][j].startNode){
                 td.setAttribute("onclick", "setField('end',"+i+", "+j+")");
             } else {
+                td.setAttribute("onmousedown", "mouseDownToggle("+i+","+j+")");
+                td.setAttribute("onmouseup", "mouseDownToggle()");
                 td.setAttribute("onmouseover", "setField('block', "+i+","+j+")");
             }
 
@@ -253,6 +269,7 @@ function setField(type, row, col){
 let pathFindings = ["Dijkstra", "Double Djikstra", "A*"];
 let secsBetweenTicks = 250;
 let activePath = "Dijkstra";
+let speedSelected = 4;
 function finishMap(){
     let pathCon;
     if(document.getElementById("pathCon") == null){
@@ -285,9 +302,13 @@ function finishMap(){
     let select = document.createElement("select");
     select.setAttribute("style", "display: inline-block;")
     select.setAttribute("id", "speedSelector");
+    select.setAttribute("onchange", "changeSpeedSelected()");
     for(let i = 0; i < speeds.length; i++){
         let option = document.createElement("option");
         option.setAttribute("value", speedsValue[i]);
+        if(i == speedSelected){
+            option.setAttribute("selected", "selected");
+        }
         let fieldTxt = document.createTextNode(speeds[i]);
         option.appendChild(fieldTxt);
         select.appendChild(option);
@@ -304,7 +325,45 @@ function finishMap(){
 
     document.getElementById("pathCon").appendChild(speed);
     document.getElementById("pathCon").appendChild(runbut);
+}
 
+function changeSpeedSelected(){
+    let val = document.getElementById("speedSelector").value;
+    speedSelected = val == 400 ? 0 : val == 200 ? 1 : val == 100 ? 2 : val == 50 ? 3 : val == 25 ? 4 : 4;
+}
+
+function clearMap(){
+    let loadImg = document.createElement("img");
+    loadImg.setAttribute("src", "loader.gif");
+    loadImg.setAttribute("style", "position: absolute; left: 45vh; top: 35vh; height: 200px; width: 200px; z-index: 3; border-radius: 4px;");
+    loadImg.setAttribute("id", "loader");
+    document.getElementById("maze").appendChild(loadImg);
+    let loops = 0;
+    var added = setInterval(function(){
+        if(document.getElementById("loader") != null){
+            loops++;
+            if(loops > 5){
+                for(let i = 0; i < maze.length; i++){
+                    for(let j = 0; j < maze[i].length; j++){
+                        if(!maze[i][j].startNode && !maze[i][j].endNode){
+                            maze[i][j].blocked = false;
+                            maze[i][j].backgroundColor = "white";
+                            maze[i][j].dist = 0;
+                            maze[i][j].prev = [null,null];
+                            maze[i][j].dist = 0;
+                            maze[i][j].visited = false;
+                            maze[i][j].connected = false;
+                            maze[i][j].connectedTo = "";
+                            repaintCell(i, j);
+                        }
+                    }
+                }
+                clearInterval(added);
+                document.getElementById("loader").remove();
+            }
+        }
+    },10);
+    console.log(maze);
 }
 
 function changePath(id){
@@ -343,13 +402,12 @@ el.onwheel = zoom;
 */
 
 function runPath(){
-    let speed  = document.getElementById("speedSelector").value;
     if(activePath == "Dijkstra"){
-        secsBetweenTicks = speed;
+        secsBetweenTicks = document.getElementById("speedSelector").value;
         djikstraPath(false);
     }
     if(activePath == "Double Djikstra"){
-        secsBetweenTicks = speed;
+        secsBetweenTicks = document.getElementById("speedSelector").value;
         djikstraPath(true);
     }
 

@@ -35,50 +35,59 @@ function djikstraPath(doublePath){
 
     let connected = [];
     let visited = [];
+    let speed = 1;
     connected = neighbours(0, connected, row, col, "start");
+    console.log(connected);
     running = window.setInterval(function(){
         let endLowest;
+        for(let i = 0; i < speed; i++){
+            maze[connected[0][0]][connected[0][1]].backgroundColor = "green";
+            maze[connected[0][0]][connected[0][1]].visited = true;
+            visited.push([connected[0][0], connected[0][1]]);
+            connected = neighbours(maze[connected[0][0]][connected[0][1]].dist, connected, connected[0][0], connected[0][1], "start");
+            unexplored.splice(unexplored.indexOf(connected[0]), 1);
 
-        maze[connected[0][0]][connected[0][1]].backgroundColor = "green";
-        maze[connected[0][0]][connected[0][1]].visited = true;
-        visited.push([connected[0][0], connected[0][1]]);
-        connected = neighbours(maze[connected[0][0]][connected[0][1]].dist, connected, connected[0][0], connected[0][1], "start");
-        unexplored.splice(unexplored.indexOf(connected[0]), 1);
+            let check = checkNeigbours(connected[0][0], connected[0][1], "start");
 
-        let check = checkNeigbours(connected[0][0], connected[0][1], "start");
+            repaintCell(connected[0][0], connected[0][1]);
 
-        repaintCell(connected[0][0], connected[0][1]);
-
-        if(doublePath && check == false){
-            maze[endConnected[0][0]][endConnected[0][1]].backgroundColor = "rgb(219, 111, 111)";
-            maze[endConnected[0][0]][endConnected[0][1]].visited = true;
-            endVisited.push([endConnected[0][0], endConnected[0][1]]);
-            endConnected = neighbours(maze[endConnected[0][0]][endConnected[0][1]].dist, endConnected, endConnected[0][0], endConnected[0][1], "end");
-            endUnexplored.splice(unexplored.indexOf(endConnected[0]), 1);
-            let endCheck = checkNeigbours(endConnected[0][0], endConnected[0][1], "end")
-            if(endCheck != false){
+            if(doublePath && check == false){
+                maze[endConnected[0][0]][endConnected[0][1]].backgroundColor = "rgb(219, 111, 111)";
+                maze[endConnected[0][0]][endConnected[0][1]].visited = true;
+                endVisited.push([endConnected[0][0], endConnected[0][1]]);
+                endConnected = neighbours(maze[endConnected[0][0]][endConnected[0][1]].dist, endConnected, endConnected[0][0], endConnected[0][1], "end");
+                endUnexplored.splice(unexplored.indexOf(endConnected[0]), 1);
+                let endCheck = checkNeigbours(endConnected[0][0], endConnected[0][1], "end")
+                if(endCheck != false){
+                    clearInterval(running);
+                    doubleFound([endConnected[0][0], endConnected[0][1]], endCheck);
+                    break;
+                }
+                repaintCell(endConnected[0][0], endConnected[0][1]);
+            } else if (doublePath && check != false){
                 clearInterval(running);
-                doubleFound([endConnected[0][0], endConnected[0][1]], endCheck);
+                doubleFound([connected[0][0], connected[0][1]], check);
+                break;
             }
-            repaintCell(endConnected[0][0], endConnected[0][1]);
-        } else if (doublePath && check != false){
-            clearInterval(running);
-            doubleFound([connected[0][0], connected[0][1]], check);
-        }
-        if(connected.length == 0 && !double || connected.length == 0 && endConnected.length == 0){
-            clearInterval(running);
-            if(maze[connected[0][0]][connected[0][1]].endNode){
+            if(connected.length == 0 && !double || connected.length == 0 && endConnected.length == 0){
+                clearInterval(running);
+                if(maze[connected[0][0]][connected[0][1]].endNode){
+                    found(connected[0]);
+                    break;
+                }
+            } 
+            //this is for soloDjikstra
+            if(checkNeighboursEnd(connected[0][0], connected[0][1]) && !doublePath){
+                clearInterval(running);
                 found(connected[0]);
+                break;
             }
-        } 
-        //this is for soloDjikstra
-        if(checkNeighboursEnd(connected[0][0], connected[0][1]) && !doublePath){
-            clearInterval(running);
-            found(connected[0]);
-        }
-        connected.shift();
-        if(doublePath){
-            endConnected.shift();
+            connected.shift();
+            if(doublePath){
+                endConnected.shift();
+            }
+            speed = Math.min(Math.floor(connected.length / 9) + 1, 5);
+            console.log(speed);
         }
     },secsBetweenTicks)
 }
