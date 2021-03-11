@@ -8,25 +8,23 @@
         <meta name="description" content="MazeGame">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="main.css">
     </head>
     <body onload="makeMaze('open')">
 
-        <div class="container-fluid bg-primary text-white fixed-top p-3" id="checklistCon"></div>
+        <div id="checklistCon"></div>
         
-        <div class="container-fluid m-0 p-2" style="height: 80vh;">
-            <div class="row justify-content-center">
-                <div class="table p-0 m-0 col-sm-12 col-md-12 col-lg-10 col-xl-8" id="maze" style="height: 78vh;"></div>
-            </div>
+        <div class="mazeContainer">
+            <div id="maze"></div>
         </div>
 
         <div class="footer">
-            <footer class="footer bg-secondary fixed-bottom pt-2 text-white" style="text-align: center; height: 3vh;">
+            <footer style="text-align: center; height: 3vh;">
                 <h5>Laurits Bonde</h5>
             </footer>
         </div>

@@ -219,6 +219,7 @@ function found(node){
         }
         prev = maze[prev[0]][prev[1]].prev;
     }
+    blockEdit = true;
 }
 
 function doubleFound(node, endnode){
