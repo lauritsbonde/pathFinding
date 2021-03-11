@@ -142,6 +142,7 @@ button:hover {
 .otherStage:hover {
     color: rgb(0, 255, 0);
     text-decoration: underline;
+    cursor: pointer;
 }
 
 .table {
