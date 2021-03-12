@@ -105,7 +105,10 @@ function createCheckList(current){
         ul.appendChild(li);
     }
 
-    let butli = document.createElement("li");
+
+
+    let butdiv = document.createElement("div");
+    butdiv.setAttribute("id", "checkButs");
     let finBut = document.createElement("button");
     finBut.setAttribute("type", "button");
     finBut.setAttribute("id", "finishbut");
@@ -121,9 +124,11 @@ function createCheckList(current){
     let clearTxt = document.createTextNode("Clear");
     clearBut.appendChild(clearTxt);
 
-    ul.appendChild(finBut);
-    ul.appendChild(clearBut);
+    butdiv.appendChild(finBut);
+    butdiv.appendChild(clearBut);
+
     document.getElementById("checklistCon").appendChild(ul);
+    document.getElementById("checklistCon").appendChild(butdiv);
 
     if(current == 0 && startNode != null){
         maze[startNode[0]][startNode[1]].startNode = false;
@@ -268,7 +273,10 @@ function finishMap(){
 
     let paths = document.createElement("div");
     paths.setAttribute("id", "paths")
+    let pathsUl = document.createElement("ul");
+    pathsUl.setAttribute("id", "pathsUl");
     for(let i = 0; i < pathFindings.length; i++){
+        let pathli = document.createElement("li");
         let path = document.createElement("p");
         path.setAttribute("onclick", "changePath("+i+")");
         if(activePath == pathFindings[i]){
@@ -278,9 +286,10 @@ function finishMap(){
         }
         let labelTxt = document.createTextNode(pathFindings[i]);
         path.appendChild(labelTxt);
-        paths.appendChild(path);
+        pathli.appendChild(path);
+        pathsUl.appendChild(pathli);
     }
-    
+    paths.appendChild(pathsUl);
     pathCon.append(paths);
 
     let speed = document.createElement("div");
