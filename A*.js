@@ -5,8 +5,7 @@ let starConnected = [];
 let starUnexplored = [];
 let starRunning;
 let lastField = [];
-
-//TODO: add last directions, and give a penalty to heuristic if it isn't the same as new one
+let lastDir = ""; //West, North, East, South
 
 function aStar(){
     let row = startNode[0];
@@ -60,10 +59,11 @@ function move(){
 function findNeighbours(row, col){
     if(col > 0){
         if(!maze[row][col-1].startNode && !maze[row][col-1].endNode && !maze[row][col-1].blocked && !maze[row][col-1].visited && !maze[row][col-1].connected){
-            maze[row][col-1].calcHeuristic();
+            maze[row][col-1].calcHeuristic(calcDirPen("W", [row, col-1]));
             maze[row][col-1].prev = lastField;
             if(!testMode) repaintCell(row,col-1);
             addToConnected(row, col-1);
+            lastDir = "W";
         }  else if (maze[row][col-1].endNode){
             maze[row][col-1].prev = lastField;
             found([row, col]);
@@ -72,10 +72,11 @@ function findNeighbours(row, col){
     } 
     if(row > 0){
         if(!maze[row-1][col].startNode && !maze[row-1][col].endNode && !maze[row-1][col].blocked && !maze[row-1][col].visited && !maze[row-1][col].connected){
-            maze[row-1][col].calcHeuristic();
+            maze[row-1][col].calcHeuristic(calcDirPen("N", [row-1,col]));
             maze[row-1][col].prev = lastField;
             if(!testMode) repaintCell(row-1,col);
             addToConnected(row-1, col);
+            lastDir = "N";
         }  else if (maze[row-1][col].endNode){
             maze[row-1][col].prev = lastField;
             found([row,col]);
@@ -84,10 +85,11 @@ function findNeighbours(row, col){
     }
     if(col < maze[0].length-1){
         if(!maze[row][col+1].startNode && !maze[row][col+1].endNode && !maze[row][col+1].blocked && !maze[row][col+1].visited && !maze[row][col+1].connected){
-            maze[row][col+1].calcHeuristic();
+            maze[row][col+1].calcHeuristic(calcDirPen("E", [row, col+1]));
             maze[row][col+1].prev = lastField;
             if(!testMode) repaintCell(row,col+1);
             addToConnected(row, col+1);
+            lastDir = "E";
         } else if (maze[row][col+1].endNode){
             maze[row][col+1].prev = lastField;
             found([row, col]);
@@ -96,16 +98,35 @@ function findNeighbours(row, col){
     }
     if(row < maze.length-1){
         if(!maze[row+1][col].startNode && !maze[row+1][col].endNode && !maze[row+1][col].blocked && !maze[row+1][col].visited && !maze[row+1][col].connected){
-            maze[row+1][col].calcHeuristic();
+            maze[row+1][col].calcHeuristic(calcDirPen("S", [row+1, col]));
             maze[row+1][col].prev = lastField;
             if(!testMode) repaintCell(row+1,col);
             addToConnected(row+1, col);
+            lastDir = "S";
         } else if (maze[row+1][col].endNode){
             maze[row+1][col].prev = lastField;
             found([row, col]);
             return "done";
         }
     }
+}
+
+function calcDirPen(nextDir, nextNode){
+    if(nextDir == lastDir){
+        return 0;
+    } else {
+        //this is used to sort out ties of weights
+        //i think this makes a "line" between the startfield and endfield, and then calculates how far off
+        //that line the current node is, read more on:
+        //http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+        dx1 = maze[nextNode[0]][nextNode[1]].pos[1] - endField[1];
+        dy1 = maze[nextNode[0]][nextNode[1]].pos[0] - endField[0];
+        dx2 = startNode[1] - endField[1];
+        dy2 = startNode[0] - endField[0];
+        cross = Math.abs(dx1*dy2 - dx2*dy1)
+        return cross*0.001
+    }
+    return 0;
 }
 
 function addToConnected(row, col){
@@ -128,7 +149,7 @@ function exchange(first, second){
 }
 
 function floatUp(index){
-    while(index > 0 && maze[starConnected[index][0]][starConnected[index][1]].heuristic <= maze[starConnected[Math.floor((index-1)/2)][0]][starConnected[Math.floor((index-1)/2)][1]].heuristic){
+    while(index > 0 && maze[starConnected[index][0]][starConnected[index][1]].heuristic < maze[starConnected[Math.floor((index-1)/2)][0]][starConnected[Math.floor((index-1)/2)][1]].heuristic){
         exchange(index, Math.floor((index-1)/2));
         index = Math.floor((index-1) / 2);
     }
@@ -148,7 +169,7 @@ function sinkDown(index){
         } else {
             break;
         }
-        if(maze[starConnected[smallestChild][0]][starConnected[smallestChild][1]].heuristic > maze[starConnected[index][0]][starConnected[index][1]].heuristic){
+        if(maze[starConnected[smallestChild][0]][starConnected[smallestChild][1]].heuristic >= maze[starConnected[index][0]][starConnected[index][1]].heuristic){
             break;
         }
         exchange(index, smallestChild);

@@ -39,10 +39,10 @@ let Node = class{
     //this can be tuned in all sorts of ways
     //if toEnd = 0, then it is basically djikstra, if toEnd is much higher than toStart it becomes Greedy-Best-First-search
     //more info = http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#:~:text=A*'s%20Use%20of%20the,to%20find%20a%20shortest%20path.
-    calcHeuristic(){
+    calcHeuristic(turn){
         let toEnd = Math.abs(this.pos[1] - endField[1]) + Math.abs(this.pos[0] - endField[0]);
         let toStart = Math.abs(this.pos[1] - startNode[1]) + Math.abs(this.pos[0] - startNode[0]);
-        this.heuristic = toEnd*1.05 + toStart;
+        this.heuristic = toEnd*1.1 + toStart + turn;
     }
 }
 
@@ -391,6 +391,7 @@ function clearMap(){
                             maze[i][j].visited = false;
                             maze[i][j].connected = false;
                             maze[i][j].connectedTo = "";
+                            maze[i][j].heuristic = Infinity;
                             repaintCell(i, j);
                         }
                     }
