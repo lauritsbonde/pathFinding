@@ -6,12 +6,6 @@ function djikstraPath(doublePath){
     let col = startNode[1];
     let endrow = endField[0];
     let endcol = endField[1];
-
-    let startSide = !maze[row][col].left ? [row, col-1] : 
-    !maze[row][col].top ? [row-1, col] :  
-    !maze[row][col].right ? [row, col+1] : 
-    !maze[row][col].bottom ? [row+1, col] : 
-    "error";
     
     let unexplored = [];
     let endUnexplored = [];

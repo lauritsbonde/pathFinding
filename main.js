@@ -1,8 +1,9 @@
-
+let testMode = false;
 let maze = [];
 
 let rows, cols;
 let newMaze = true;
+let cleared = true;
 
 //true == wall;
 let Node = class{
@@ -26,8 +27,22 @@ let Node = class{
         this.connected = false;
         this.connectedTo = "";
 
+        //A*
+        this.pos = [];
+        this.distanceToEnd = Infinity;
+        this.heuristic = Infinity; //basically manhattan distance to endnode + manhattan distance to startnode, the weight of the node
+
         //misc
         this.backgroundColor = "white";
+    }
+
+    //this can be tuned in all sorts of ways
+    //if toEnd = 0, then it is basically djikstra, if toEnd is much higher than toStart it becomes Greedy-Best-First-search
+    //more info = http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#:~:text=A*'s%20Use%20of%20the,to%20find%20a%20shortest%20path.
+    calcHeuristic(){
+        let toEnd = Math.abs(this.pos[1] - endField[1]) + Math.abs(this.pos[0] - endField[0]);
+        let toStart = Math.abs(this.pos[1] - startNode[1]) + Math.abs(this.pos[0] - startNode[0]);
+        this.heuristic = toEnd*1.05 + toStart;
     }
 }
 
@@ -40,12 +55,12 @@ let endfieldPicked = false;
 let endField = null;
 
 //how is either manual or automatic for generating maze
-function makeMaze(how){
+function makeMaze(how, rows, col){
     document.getElementById("maze").innerHTML = "";
 
     maze = [];
-    rows = 30;
-    cols = 30;
+    rows = rows;
+    cols = col;
     newMaze = true;
     
     if(newMaze){
@@ -59,16 +74,19 @@ function makeMaze(how){
                 } else {
                     mazeRow.push(new Node(true));
                 }
+                mazeRow[j].pos = [i, j];
             }
             maze.push(mazeRow);
         }
         let randstart = [Math.floor(Math.random() * rows),Math.floor(Math.random() * cols)];
+        //let randstart = [1,0];
         maze[randstart[0]][randstart[1]].startNode = true;
         maze[randstart[0]][randstart[1]].backgroundColor = "rgb(60, 255, 0)";
         startFieldPicked = true;
         startNode = randstart;
 
         let randEnd = [Math.floor(Math.random() * rows),Math.floor(Math.random() * cols)]
+        //let randEnd = [2,3];
         maze[randEnd[0]][randEnd[1]].endNode = true;
         maze[randEnd[0]][randEnd[1]].backgroundColor = "red";
         endfieldPicked = true;
@@ -149,17 +167,21 @@ function createCheckList(current){
         blockEdit = false;
         pickEndfield = false;
     }
+
+    finishMap();
 }
 
 let mouseDown = false;
 function mouseDownToggle(row, col){
     mouseDown = !mouseDown;
-    if(pickEndfield){
-        setField("end", row, col);
-    } else if (pickStartField){
-        setField("start", row, col);
-    } else {
-        setField("block", row, col);
+    if(cleared){
+        if(pickEndfield){
+            setField("end", row, col);
+        } else if (pickStartField){
+            setField("start", row, col);
+        } else {
+            setField("block", row, col);
+        }
     }
 }
 
@@ -167,7 +189,7 @@ function mouseDownFalse(){
     mouseDown = false;
 }
 function mouseOver(type, row, col){
-    if(mouseDown){
+    if(mouseDown && cleared){
         setField(type, row, col);
     }
 }
@@ -190,6 +212,12 @@ function repaint(){
             } else if (maze[i][j].endNode){
                 td.setAttribute("class", "endNode");
             }
+            if(testMode){
+                let p = document.createElement("p");
+                let pTXT = document.createTextNode(maze[i][j].pos);
+                p.appendChild(pTXT);
+                td.appendChild(p);
+            }
             td.setAttribute("style", "background-color:" +maze[i][j].backgroundColor+";");
             row.appendChild(td);
         }
@@ -208,6 +236,13 @@ function repaintCell(row, col){
         distHeader.appendChild(distTxt);
         field.appendChild(distHeader);
     }
+    if(maze[row][col].heuristic != Infinity){
+        let distHeader = document.createElement("p");
+        distHeader.setAttribute("class", "distTxt");
+        let distTxt = document.createTextNode(Math.round(maze[row][col].heuristic*10)/10);
+        distHeader.appendChild(distTxt);
+        field.appendChild(distHeader);
+    }
     field.setAttribute("style", "background-color:" +maze[row][col].backgroundColor+";");
 }
 
@@ -218,6 +253,7 @@ function setField(type, row, col){
         } else {
             maze[startNode[0]][startNode[1]].startNode = false;
             maze[startNode[0]][startNode[1]].backgroundColor = "white";
+            maze[row][col].dist = 0;
             repaintCell(startNode[0], startNode[1]);
             startNode = [row, col];
         }
@@ -233,6 +269,7 @@ function setField(type, row, col){
             maze[endField[0]][endField[1]].endNode = false;
             maze[endField[0]][endField[1]].backgroundColor = "white";
             repaintCell(endField[0], endField[1]);
+            maze[row][col].dist = 0;
             endField = [row, col];
         }
         maze[row][col].endNode = true;
@@ -259,7 +296,7 @@ function setField(type, row, col){
 
 let pathFindings = ["Dijkstra", "Double Djikstra", "A*"];
 let secsBetweenTicks = 250;
-let activePath = "Dijkstra";
+let activePath = "A*";
 let speedSelected = 4;
 function finishMap(){
     let pathCon;
@@ -363,6 +400,7 @@ function clearMap(){
             }
         }
     },10);
+    cleared = true;
 }
 
 function changePath(id){
@@ -378,14 +416,17 @@ function changePath(id){
 
 
 function runPath(){
+    cleared = false;
     blockEdit = false;
     if(activePath == "Dijkstra"){
         secsBetweenTicks = document.getElementById("speedSelector").value;
         djikstraPath(false);
-    }
-    if(activePath == "Double Djikstra"){
+    } else if(activePath == "Double Djikstra"){
         secsBetweenTicks = document.getElementById("speedSelector").value;
         djikstraPath(true);
+    } else if(activePath == "A*"){
+        secsBetweenTicks = document.getElementById("speedSelector").value;
+        aStar();
     }
 
 }
