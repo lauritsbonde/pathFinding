@@ -31,9 +31,8 @@ function djikstraPath(doublePath){
     let visited = [];
     let speed = 1;
     connected = neighbours(0, connected, row, col, "start");
-    console.log(connected);
+    
     running = window.setInterval(function(){
-        let endLowest;
         for(let i = 0; i < speed; i++){
             maze[connected[0][0]][connected[0][1]].backgroundColor = "green";
             maze[connected[0][0]][connected[0][1]].visited = true;

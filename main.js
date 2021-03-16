@@ -29,7 +29,6 @@ let Node = class{
 
         //A*
         this.pos = [];
-        this.distanceToEnd = Infinity;
         this.heuristic = Infinity; //basically manhattan distance to endnode + manhattan distance to startnode, the weight of the node
 
         //misc
@@ -39,7 +38,13 @@ let Node = class{
     //this can be tuned in all sorts of ways
     //if toEnd = 0, then it is basically djikstra, if toEnd is much higher than toStart it becomes Greedy-Best-First-search
     //more info = http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#:~:text=A*'s%20Use%20of%20the,to%20find%20a%20shortest%20path.
-    calcHeuristic(turn){
+    calcBaseHeuristic(){
+        let toEnd = Math.abs(this.pos[1] - endField[1]) + Math.abs(this.pos[0] - endField[0]);
+        let toStart = Math.abs(this.pos[1] - startNode[1]) + Math.abs(this.pos[0] - startNode[0]);
+        this.heuristic = toEnd + toStart;
+    }
+
+    calcTieHeuristic(turn){
         let toEnd = Math.abs(this.pos[1] - endField[1]) + Math.abs(this.pos[0] - endField[0]);
         let toStart = Math.abs(this.pos[1] - startNode[1]) + Math.abs(this.pos[0] - startNode[0]);
         this.heuristic = toEnd*1.1 + toStart + turn;
@@ -79,14 +84,14 @@ function makeMaze(how, rows, col){
             maze.push(mazeRow);
         }
         let randstart = [Math.floor(Math.random() * rows),Math.floor(Math.random() * cols)];
-        //let randstart = [1,0];
+        //let randstart = [1,8];
         maze[randstart[0]][randstart[1]].startNode = true;
         maze[randstart[0]][randstart[1]].backgroundColor = "rgb(60, 255, 0)";
         startFieldPicked = true;
         startNode = randstart;
 
         let randEnd = [Math.floor(Math.random() * rows),Math.floor(Math.random() * cols)]
-        //let randEnd = [2,3];
+        //let randEnd = [7,6];
         maze[randEnd[0]][randEnd[1]].endNode = true;
         maze[randEnd[0]][randEnd[1]].backgroundColor = "red";
         endfieldPicked = true;
